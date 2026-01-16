@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/internal"
 	"strings"
 )
 
@@ -15,12 +16,11 @@ func (c *Config) Describe() string {
 
 func (rule *ObjectRule) Describe(c *Config) string {
 	pluralKind := pluralizeKind(rule.Kind)
-	includedNamespaces := c.Namespaces
-	if len(rule.Namespaces) > 0 {
-		includedNamespaces = rule.Namespaces
+	includedNamespaces := rule.Namespaces
+	if len(includedNamespaces) == 0 {
+		includedNamespaces = c.Namespaces
 	}
-	excludedNamespaces := c.ExcludeNamespaces
-	return fmt.Sprintf("%s in %s", pluralKind, namespaceList(includedNamespaces, excludedNamespaces))
+	return fmt.Sprintf("%s in %s", pluralKind, describeNamespaceScope(includedNamespaces, c.ExcludeNamespaces))
 }
 
 func pluralizeKind(kind string) string {
@@ -33,28 +33,22 @@ func pluralizeKind(kind string) string {
 	return kind + "s"
 }
 
-func namespaceList(included, excluded []string) string {
-	result := ""
+func describeNamespaceScope(included, excluded []string) string {
 	if len(included) == 0 {
-		result = "all namespaces"
-	} else {
-		result = formatList(included, "or")
+		if len(excluded) == 0 {
+			return "all namespaces"
+		}
+		return fmt.Sprintf("all namespaces except %s", internal.FormatQuotedList(excluded))
 	}
-	if len(excluded) > 0 {
-		result = fmt.Sprintf("%s excluding %s", result, formatList(included, "and"))
-	}
-	return result
-}
 
-func formatList(namespaces []string, conjunction string) string {
-	quoted := make([]string, len(namespaces))
-	for i, ns := range namespaces {
-		quoted[i] = fmt.Sprintf("%q", ns)
+	scope := "namespaces"
+	if len(included) == 1 {
+		scope = "namespace"
 	}
-	if len(quoted) == 1 {
-		return fmt.Sprintf("the %s namespace", quoted[0])
-	} else if len(quoted) == 2 {
-		return fmt.Sprintf("the %s %s %s namespaces", quoted[0], conjunction, quoted[1])
+
+	description := fmt.Sprintf("the %s %s", internal.FormatQuotedList(included), scope)
+	if len(excluded) > 0 {
+		description = fmt.Sprintf("%s (excluding %s)", description, internal.FormatQuotedList(excluded))
 	}
-	return fmt.Sprintf("the %s %s %s namespaces", strings.Join(quoted[:len(quoted)-1], ", "), conjunction, quoted[len(quoted)-1])
+	return description
 }

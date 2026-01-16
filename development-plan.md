@@ -12,7 +12,7 @@
    - Confirm the shipped `config.yaml` keys (`outputDir`, `outputFormat`, etc.) match the README schema (`output.directory`, `output.format`).
    - Decide on a canonical structure, update docs or sample accordingly, and add a minimal unit test that loads the config fixture to guard against regressions.
 
-2. **Configuration Loader**
+2. **Configuration Loader** *(completed: YAML loader + CLI overrides/tests)*
    - Implement a small package that reads the YAML config, applies command-line overrides, and validates required fields (e.g., at least one object definition, supported output formats).
    - Cover parsing/validation with table-driven tests using in-memory YAML strings.
 
