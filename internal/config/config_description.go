@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Config) Describe() string {
-	result := fmt.Sprintf("This configuration will get manifests for:\n")
+	result := "This configuration will get manifests for:\n"
 	for _, rule := range c.Objects {
 		result += fmt.Sprintf("  %s\n", rule.Describe(c))
 	}

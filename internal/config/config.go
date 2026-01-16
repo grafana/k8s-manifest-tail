@@ -48,7 +48,7 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open config: %w", err)
 	}
-	defer file.Close()
+	defer func(file *os.File) { _ = file.Close() }(file)
 
 	decoder := yaml.NewDecoder(file)
 	decoder.KnownFields(true)
