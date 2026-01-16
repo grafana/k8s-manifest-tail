@@ -1,0 +1,9 @@
+output:
+  directory: output
+  format: yaml
+excludeNamespaces:
+  - kube-system
+  - observability
+objects:
+  - apiVersion: v1
+    kind: Pod

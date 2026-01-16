@@ -20,25 +20,25 @@
    - Introduce Cobra with three commands: `list`, `run`, and `run-and-watch`.
    - Wire up shared persistent flags (kubeconfig, output directory/format, refresh interval, namespace filters) and ensure `k8s-manifest-tail list` prints configured targets using the loaded config.
 
-4. **Behavior-Driven Test Harness**
+4. **Behavior-Driven Test Harness** *(completed: Ginkgo CLI tests for --help/describe added)*
    - Establish a BDD-style testing framework (e.g., Ginkgo/Gomega or similar helpers) for CLI behavior, starting with integration-ish tests that assert `--help` output and `describe` command behavior.
    - Create reusable fixtures/helpers so new commands can easily add behavioral tests.
 
-5. **OpenTelemetry Baseline**
-   - Define the initial OpenTelemetry tracer/meter setup so subsequent packages can emit spans/metrics.
-   - Provide configuration flags/env vars for enabling/disabling telemetry and document default exporters.
-
-6. **Kubernetes Client Factory**
+5. **Kubernetes Client Factory**
    - Add a helper that builds a rest.Config via in-cluster detection or kubeconfig path and surfaces meaningful errors.
    - Unit test the helper by mocking environment variables and kubeconfig paths where possible.
 
-7. **Object Discovery & Fetch**
+6. **Object Discovery & Fetch**
    - Implement logic that, for each configured object rule, lists matching resources (respecting include/exclude namespaces) and fetches their manifests.
    - Start with support for a single simple kind (e.g., Pods) and add tests using the fake Kubernetes client.
 
-8. **Manifest Serialization**
+7. **Manifest Serialization**
    - Add writer utilities that render the fetched manifests as YAML/JSON and save them into `<outputDir>/<kind>/<namespace>/<name>.yaml|json`, creating directories as needed.
    - Include unit tests that write to a temp directory and assert the expected files and formats.
+
+8. **OpenTelemetry Baseline**
+   - Define the initial OpenTelemetry tracer/meter setup so subsequent packages can emit spans/metrics.
+   - Provide configuration flags/env vars for enabling/disabling telemetry and document default exporters.
 
 9. **`run` Command Execution Path**
    - Wire the config, discovery, and writer pieces together so `run` performs a full fetch cycle once, returning errors via exit codes.
@@ -51,3 +51,7 @@
 11. **Polish & Observability**
    - Add structured logging, metrics hooks (if needed), and clear error messages.
    - Document CLI usage examples in README and ensure `make build` produces the binary into `build/`.
+
+12. **Filters & Selectors**
+   - Support manifest filtering to strip sensitive or noisy fields (e.g., status, env values) before writing files.
+   - Extend object rules with optional label selectors for finer-grained discovery.

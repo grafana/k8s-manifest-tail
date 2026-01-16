@@ -1,0 +1,13 @@
+output:
+  directory: output
+  format: yaml
+namespaces:
+  - default
+objects:
+  - apiVersion: apps/v1
+    kind: Deployment
+  - apiVersion: v1
+    kind: Service
+    namespaces:
+      - prod
+      - staging

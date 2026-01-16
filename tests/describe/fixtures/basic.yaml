@@ -1,0 +1,6 @@
+output:
+  directory: output
+  format: yaml
+objects:
+  - apiVersion: v1
+    kind: Pod
