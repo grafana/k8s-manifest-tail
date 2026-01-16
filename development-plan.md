@@ -24,7 +24,7 @@
    - Establish a BDD-style testing framework (e.g., Ginkgo/Gomega or similar helpers) for CLI behavior, starting with integration-ish tests that assert `--help` output and `describe` command behavior.
    - Create reusable fixtures/helpers so new commands can easily add behavioral tests.
 
-5. **Kubernetes Client Factory**
+5. **Kubernetes Client Factory** *(completed: dynamic client provider with injectable fake)*
    - Add a helper that builds a rest.Config via in-cluster detection or kubeconfig path and surfaces meaningful errors.
    - Unit test the helper by mocking environment variables and kubeconfig paths where possible.
 
