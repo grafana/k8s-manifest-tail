@@ -25,7 +25,7 @@ lint-go: ## Run golangci-lint against the codebase
 	$(GOLANGCI_LINT) run ./...
 
 lint-zizmor: ## Statically analyze GitHub Action workflows
-	@if command -v zizmor&> /dev/null; then \
+	@if command -v zizmor >/dev/null 2>&1; then \
 		zizmor .; \
 	else \
 		docker run --rm -v $(shell pwd):/src --workdir /src ghcr.io/zizmorcore/zizmor:latest .; \
