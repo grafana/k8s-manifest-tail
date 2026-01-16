@@ -1,0 +1,35 @@
+# kubeconfig points to the Kubernetes config file to use (defaults to empty for auto-detect)
+kubeconfig: ""
+
+# Configuration for manifest output
+output:
+  # The directory path, relative to the working directory, where to store manifest files.
+  directory: output
+
+  # The format to use when saving manifest files. Valid options: yaml, json
+  format: yaml
+
+# When to fetch another full set of all objects
+refreshInterval: 1d
+
+# Namespaces to look for any objects
+namespaces: []
+
+# Namespaces to skip for any objects
+excludeNamespaces: []
+
+# Rules per kind
+objects:
+  - apiVersion: v1
+    kind: Pod
+    namespaces: []
+  - apiVersion: apps/v1
+    kind: Deployment
+    namespaces:
+      - default
+  - apiVersion: v1
+    kind: Service
+    namespaces:
+      - default
+      - prod
+      - staging
