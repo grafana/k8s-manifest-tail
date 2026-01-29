@@ -170,16 +170,16 @@ type listPrinter struct {
 
 func (p *listPrinter) Print(rule config.ObjectRule, namespace, name string) {
 	if !p.headerPrinted {
-		fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", "KIND", "API VERSION", "NAMESPACE", "NAME")
+		_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", "KIND", "API VERSION", "NAMESPACE", "NAME")
 		p.headerPrinted = true
 	}
-	fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", rule.Kind, rule.APIVersion, namespaceOrDash(namespace), name)
+	_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", rule.Kind, rule.APIVersion, namespaceOrDash(namespace), name)
 	p.itemsPrinted = true
 }
 
 func (p *listPrinter) Flush() {
 	if !p.itemsPrinted {
-		fmt.Fprintln(p.out, "No resources found")
+		_, _ = fmt.Fprintln(p.out, "No resources found")
 	}
 }
 
