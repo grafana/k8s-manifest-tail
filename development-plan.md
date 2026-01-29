@@ -55,3 +55,7 @@
 12. **Filters & Selectors**
    - Support manifest filtering to strip sensitive or noisy fields (e.g., status, env values) before writing files.
    - Extend object rules with optional label selectors for finer-grained discovery.
+
+13. **Change Logging**
+   - Add an optional stdout change log for `run-and-watch` that surfaces only the diffs between manifest revisions so operators can follow updates without inspecting files.
+   - Expose a flag/config toggle to enable or disable the change log and ensure it gracefully degrades when diffs cannot be computed.

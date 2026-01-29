@@ -28,10 +28,6 @@ func init() {
 }
 
 func runList(cmd *cobra.Command, args []string) error {
-	if Configuration == nil {
-		return fmt.Errorf("configuration not loaded")
-	}
-
 	ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 	defer cancel()
 
