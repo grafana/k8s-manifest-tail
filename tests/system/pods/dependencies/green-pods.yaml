@@ -13,3 +13,10 @@ spec:
   containers:
   - name: green-pod
     image: nginx
+    env:
+      - name: COLOR
+        value: green
+      - name: NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName

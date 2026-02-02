@@ -35,30 +35,3 @@ func (p *FilterProcessor) Process(rule config.ObjectRule, obj *unstructured.Unst
 	}
 	return p.next.Process(rule, obj, cfg)
 }
-
-// RemoveStatusFilter strips the status stanza from manifests.
-type RemoveStatusFilter struct{}
-
-// Apply removes the status field from the given object.
-func (RemoveStatusFilter) Apply(obj *unstructured.Unstructured) error {
-	if obj == nil {
-		return nil
-	}
-	unstructured.RemoveNestedField(obj.Object, "status")
-	return nil
-}
-
-// RemoveMetadataFieldsFilter strips server-populated metadata entries.
-type RemoveMetadataFieldsFilter struct{}
-
-// Apply removes known noisy metadata fields.
-func (RemoveMetadataFieldsFilter) Apply(obj *unstructured.Unstructured) error {
-	if obj == nil {
-		return nil
-	}
-	fields := []string{"managedFields", "uid", "selfLink"}
-	for _, field := range fields {
-		unstructured.RemoveNestedField(obj.Object, "metadata", field)
-	}
-	return nil
-}
