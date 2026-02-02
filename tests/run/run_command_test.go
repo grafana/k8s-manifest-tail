@@ -129,6 +129,41 @@ objects:
 		Expect(err).To(HaveOccurred())
 		Expect(stderr).To(ContainSubstring("write failed"))
 	})
+
+	It("logs compact diffs when enabled", func() {
+		configPath := writeConfigFile(GinkgoT(), `
+output:
+  directory: ignored
+  format: yaml
+logging:
+  logDiffs: compact
+objects:
+  - apiVersion: v1
+    kind: Pod
+`)
+		pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "api", Namespace: "default"}}
+		provider := newFakeProvider(
+			[]runtime.Object{pod},
+			[]resourceMapping{
+				{
+					GVR:   corev1.SchemeGroupVersion.WithResource("pods"),
+					GVK:   corev1.SchemeGroupVersion.WithKind("Pod"),
+					Scope: meta.RESTScopeNamespace,
+				},
+			},
+		)
+		cmd.SetKubeProvider(provider)
+		cmd.SetManifestProcessor(&testProcessor{
+			handler: func(rule config.ObjectRule, obj *unstructured.Unstructured, _ *config.Config) (*manifest.Diff, error) {
+				return &manifest.Diff{Current: obj.DeepCopy()}, nil
+			},
+		})
+
+		stdout, stderr, err := runRunCommand(configPath)
+
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("stderr: %s", stderr))
+		Expect(stdout).To(ContainSubstring("Object changed: Pod default/api"))
+	})
 })
 
 type testProcessor struct {

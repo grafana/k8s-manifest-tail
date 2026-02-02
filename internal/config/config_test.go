@@ -20,6 +20,8 @@ kubeconfig: "/tmp/kubeconfig"
 output:
   directory: out
   format: json
+logging:
+  logDiffs: compact
 objects:
   - apiVersion: v1
     kind: Pod
@@ -33,6 +35,7 @@ objects:
 	g.Expect(cfg.Kubeconfig).To(gomega.Equal("/tmp/kubeconfig"))
 	g.Expect(cfg.Output.Directory).To(gomega.Equal("out"))
 	g.Expect(cfg.Output.Format).To(gomega.Equal(OutputFormatJSON))
+	g.Expect(cfg.Logging.Mode()).To(gomega.Equal(LogDiffsCompact))
 	g.Expect(cfg.Objects).To(gomega.HaveLen(1))
 	g.Expect(cfg.Objects[0].Kind).To(gomega.Equal("Pod"))
 }
@@ -77,4 +80,44 @@ func TestConfigValidateInvokesRuleValidation(t *testing.T) {
 
 	err := cfg.Validate()
 	g.Expect(err).NotTo(gomega.HaveOccurred())
+}
+
+func TestLoggingConfigUnmarshalBool(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	data := `
+logging:
+  logDiffs: false
+objects:
+  - apiVersion: v1
+    kind: Pod
+`
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(cfg.Logging.Mode()).To(gomega.Equal(LogDiffsDisabled))
+}
+
+func TestLoggingConfigInvalidMode(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	cfg := &Config{
+		Logging: LoggingConfig{LogDiffs: LogDiffMode("unknown")},
+		Objects: []ObjectRule{
+			{APIVersion: "v1", Kind: "Pod"},
+		},
+	}
+
+	err := cfg.Validate()
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(err.Error()).To(gomega.ContainSubstring("validate logging config"))
 }

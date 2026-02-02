@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/internal/logging"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -36,6 +37,8 @@ func runRun(cmd *cobra.Command, args []string) error {
 		SetManifestProcessor(manifest.NewProcessor(Configuration))
 	}
 
+	diffLogger := logging.NewDiffLogger(Configuration.Logging, cmd.OutOrStdout())
+
 	var total int
 	for _, rule := range Configuration.Objects {
 		objects, err := fetcher.FetchResources(ctx, rule)
@@ -45,12 +48,14 @@ func runRun(cmd *cobra.Command, args []string) error {
 		for i := range objects {
 			obj := objects[i].DeepCopy()
 			total++
-			if _, err := manifestProcessor.Process(rule, obj, Configuration); err != nil {
+			diff, err := manifestProcessor.Process(rule, obj, Configuration)
+			if err != nil {
 				return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 			}
+			diffLogger.Log(diff)
 		}
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
 	return nil
 }
 

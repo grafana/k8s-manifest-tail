@@ -1,6 +1,9 @@
 output:
   directory: expected/output
 
+logging:
+  logDiffs: compact
+
 excludeNamespaces:
   - blue
 
