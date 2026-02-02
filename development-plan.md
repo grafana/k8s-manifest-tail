@@ -30,7 +30,11 @@
 
 6. **Object Discovery & Fetch**
    - Implement logic that, for each configured object rule, lists matching resources (respecting include/exclude namespaces) and fetches their manifests.
+     - Introduce a discovery helper (e.g., `internal/discovery`) that reuses the namespace/include/exclude logic from the list command and returns all matched `unstructured.Unstructured` objects for a rule.
+     - Extract any reusable namespace/mapping helpers from `cmd/list.go` so both commands share the same code path, minimizing duplicated selection logic.
    - Start with support for a single simple kind (e.g., Pods) and add tests using the fake Kubernetes client.
+     - Cover the helper with table-driven unit tests using the fake dynamic client to ensure it handles global namespace filters, per-rule overrides, and exclude lists correctly.
+     - Add a behavior-style test for `k8s-manifest-tail run` that stubs the kube provider, invokes `run --config <fixture>`, and asserts that manifests are fetched and prepared for serialization even before the writer lands in Step 7.
 
 7. **Manifest Serialization**
    - Add writer utilities that render the fetched manifests as YAML/JSON and save them into `<outputDir>/<kind>/<namespace>/<name>.yaml|json`, creating directories as needed.

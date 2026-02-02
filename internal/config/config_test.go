@@ -46,3 +46,35 @@ func TestLoadMissingFile(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.Equal("open config: open missing.yaml: no such file or directory"))
 }
+
+func TestObjectRuleValidateDuplicateNamespaces(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	rule := ObjectRule{
+		APIVersion: "apps/v1",
+		Kind:       "Deployment",
+		Namespaces: []string{"default", "prod", "default"},
+	}
+
+	err := rule.Validate()
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(err.Error()).To(gomega.ContainSubstring("duplicate namespace"))
+}
+
+func TestConfigValidateInvokesRuleValidation(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	cfg := &Config{
+		Objects: []ObjectRule{
+			{APIVersion: "v1", Kind: "Pod", Namespaces: []string{"default"}},
+			{APIVersion: "apps/v1", Kind: "Deployment", Namespaces: []string{"prod", "stage"}},
+		},
+	}
+
+	err := cfg.Validate()
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+}

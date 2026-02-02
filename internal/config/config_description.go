@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-func (c *Config) Describe() string {
+func (cfg *Config) Describe() string {
 	result := "This configuration will get manifests for:\n"
-	for _, rule := range c.Objects {
-		result += fmt.Sprintf("  %s\n", rule.Describe(c))
+	for _, rule := range cfg.Objects {
+		result += fmt.Sprintf("  %s\n", rule.Describe(cfg))
 	}
 	return result
 }

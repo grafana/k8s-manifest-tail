@@ -58,5 +58,46 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("decode config: %w", err)
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
+}
+
+// Validate ensures the configuration is internally consistent.
+func (cfg *Config) Validate() error {
+	for i, rule := range cfg.Objects {
+		if err := rule.Validate(); err != nil {
+			return fmt.Errorf("validate object rule %d: %w", i+1, err)
+		}
+	}
+	err := checkForDuplicates(cfg.Namespaces)
+	if err != nil {
+		return fmt.Errorf("global inclusion namespaces has duplicate: %w", err)
+	}
+	err = checkForDuplicates(cfg.ExcludeNamespaces)
+	if err != nil {
+		return fmt.Errorf("global exclusion namespaces has duplicate: %w", err)
+	}
+	return nil
+}
+
+// Validate ensures an object rule is internally consistent.
+func (rule *ObjectRule) Validate() error {
+	return checkForDuplicates(rule.Namespaces)
+}
+
+func checkForDuplicates(namespaces []string) error {
+	seen := make(map[string]struct{}, len(namespaces))
+	for _, ns := range namespaces {
+		if ns == "" {
+			continue
+		}
+		if _, ok := seen[ns]; ok {
+			return fmt.Errorf("duplicate namespace %s", ns)
+		}
+		seen[ns] = struct{}{}
+	}
+	return nil
 }
