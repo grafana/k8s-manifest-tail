@@ -2,6 +2,8 @@ package run_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -21,6 +23,41 @@ var _ = Describe("run command", func() {
 		cmd.SetKubeProvider(nil)
 		cmd.SetManifestProcessor(nil)
 		cmd.ResetConfiguration()
+	})
+
+	It("writes manifests to the configured directory", func() {
+		outputDir := GinkgoT().TempDir()
+		configPath := writeConfigFile(GinkgoT(), fmt.Sprintf(`
+output:
+  directory: %q
+  format: yaml
+objects:
+  - apiVersion: v1
+    kind: Pod
+`, outputDir))
+		pod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "api", Namespace: "default"},
+		}
+		provider := newFakeProvider(
+			[]runtime.Object{pod},
+			[]resourceMapping{
+				{
+					GVR:   corev1.SchemeGroupVersion.WithResource("pods"),
+					GVK:   corev1.SchemeGroupVersion.WithKind("Pod"),
+					Scope: meta.RESTScopeNamespace,
+				},
+			},
+		)
+		cmd.SetKubeProvider(provider)
+
+		stdout, stderr, err := runRunCommand(configPath)
+
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("stderr: %s", stderr))
+		Expect(stdout).To(ContainSubstring("Fetched 1 manifest"))
+		path := filepath.Join(outputDir, "Pod", "default", "api.yaml")
+		contents, readErr := os.ReadFile(path)
+		Expect(readErr).NotTo(HaveOccurred())
+		Expect(string(contents)).To(ContainSubstring("kind: Pod"))
 	})
 
 	It("processes fetched manifests", func() {
@@ -48,9 +85,11 @@ objects:
 		cmd.SetKubeProvider(provider)
 
 		var processed []string
-		cmd.SetManifestProcessor(func(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) error {
-			processed = append(processed, fmt.Sprintf("%s/%s %s", obj.GetNamespace(), obj.GetName(), rule.Kind))
-			return nil
+		cmd.SetManifestProcessor(&testProcessor{
+			handler: func(rule config.ObjectRule, obj *unstructured.Unstructured) error {
+				processed = append(processed, fmt.Sprintf("%s/%s %s", obj.GetNamespace(), obj.GetName(), rule.Kind))
+				return nil
+			},
 		})
 
 		stdout, stderr, err := runRunCommand(configPath)
@@ -78,8 +117,10 @@ objects:
 			},
 		)
 		cmd.SetKubeProvider(provider)
-		cmd.SetManifestProcessor(func(config.ObjectRule, *unstructured.Unstructured, *config.Config) error {
-			return fmt.Errorf("write failed")
+		cmd.SetManifestProcessor(&testProcessor{
+			handler: func(config.ObjectRule, *unstructured.Unstructured) error {
+				return fmt.Errorf("write failed")
+			},
 		})
 
 		_, stderr, err := runRunCommand(configPath)
@@ -88,3 +129,14 @@ objects:
 		Expect(stderr).To(ContainSubstring("write failed"))
 	})
 })
+
+type testProcessor struct {
+	handler func(rule config.ObjectRule, obj *unstructured.Unstructured) error
+}
+
+func (t *testProcessor) Process(rule config.ObjectRule, obj *unstructured.Unstructured) error {
+	if t.handler == nil {
+		return nil
+	}
+	return t.handler(rule, obj)
+}

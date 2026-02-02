@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/k8s-manifest-tail/internal/config"
 	"github.com/grafana/k8s-manifest-tail/internal/discovery"
+	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 )
 
 var runCmd = &cobra.Command{
@@ -33,6 +32,10 @@ func runRun(cmd *cobra.Command, args []string) error {
 	}
 
 	fetcher := discovery.NewFetcher(clients, Configuration)
+	if manifestProcessor == nil {
+		SetManifestProcessor(manifest.NewProcessor(Configuration))
+	}
+
 	var total int
 	for _, rule := range Configuration.Objects {
 		objects, err := fetcher.FetchResources(ctx, rule)
@@ -42,7 +45,7 @@ func runRun(cmd *cobra.Command, args []string) error {
 		for i := range objects {
 			obj := objects[i].DeepCopy()
 			total++
-			if err := manifestProcessor(rule, obj, Configuration); err != nil {
+			if err := manifestProcessor.Process(rule, obj); err != nil {
 				return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 			}
 		}
@@ -51,20 +54,9 @@ func runRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type manifestProcessorFunc func(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) error
-
-var manifestProcessor manifestProcessorFunc = func(config.ObjectRule, *unstructured.Unstructured, *config.Config) error {
-	return nil
-}
+var manifestProcessor manifest.Processor
 
 // SetManifestProcessor overrides the manifest processor used by the run command (primarily for tests).
-// Passing nil restores the default no-op processor.
-func SetManifestProcessor(fn manifestProcessorFunc) {
-	if fn == nil {
-		manifestProcessor = func(config.ObjectRule, *unstructured.Unstructured, *config.Config) error {
-			return nil
-		}
-		return
-	}
-	manifestProcessor = fn
+func SetManifestProcessor(p manifest.Processor) {
+	manifestProcessor = p
 }
