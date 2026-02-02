@@ -47,3 +47,18 @@ func (RemoveStatusFilter) Apply(obj *unstructured.Unstructured) error {
 	unstructured.RemoveNestedField(obj.Object, "status")
 	return nil
 }
+
+// RemoveMetadataFieldsFilter strips server-populated metadata entries.
+type RemoveMetadataFieldsFilter struct{}
+
+// Apply removes known noisy metadata fields.
+func (RemoveMetadataFieldsFilter) Apply(obj *unstructured.Unstructured) error {
+	if obj == nil {
+		return nil
+	}
+	fields := []string{"managedFields", "uid", "selfLink"}
+	for _, field := range fields {
+		unstructured.RemoveNestedField(obj.Object, "metadata", field)
+	}
+	return nil
+}
