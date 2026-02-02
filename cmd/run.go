@@ -45,7 +45,7 @@ func runRun(cmd *cobra.Command, args []string) error {
 		for i := range objects {
 			obj := objects[i].DeepCopy()
 			total++
-			if err := manifestProcessor.Process(rule, obj); err != nil {
+			if _, err := manifestProcessor.Process(rule, obj, Configuration); err != nil {
 				return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 			}
 		}

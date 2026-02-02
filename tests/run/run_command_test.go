@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/k8s-manifest-tail/cmd"
 	"github.com/grafana/k8s-manifest-tail/internal/config"
+	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -86,9 +87,9 @@ objects:
 
 		var processed []string
 		cmd.SetManifestProcessor(&testProcessor{
-			handler: func(rule config.ObjectRule, obj *unstructured.Unstructured) error {
+			handler: func(rule config.ObjectRule, obj *unstructured.Unstructured, _ *config.Config) (*manifest.Diff, error) {
 				processed = append(processed, fmt.Sprintf("%s/%s %s", obj.GetNamespace(), obj.GetName(), rule.Kind))
-				return nil
+				return nil, nil
 			},
 		})
 
@@ -118,8 +119,8 @@ objects:
 		)
 		cmd.SetKubeProvider(provider)
 		cmd.SetManifestProcessor(&testProcessor{
-			handler: func(config.ObjectRule, *unstructured.Unstructured) error {
-				return fmt.Errorf("write failed")
+			handler: func(config.ObjectRule, *unstructured.Unstructured, *config.Config) (*manifest.Diff, error) {
+				return nil, fmt.Errorf("write failed")
 			},
 		})
 
@@ -131,12 +132,12 @@ objects:
 })
 
 type testProcessor struct {
-	handler func(rule config.ObjectRule, obj *unstructured.Unstructured) error
+	handler func(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) (*manifest.Diff, error)
 }
 
-func (t *testProcessor) Process(rule config.ObjectRule, obj *unstructured.Unstructured) error {
+func (t *testProcessor) Process(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) (*manifest.Diff, error) {
 	if t.handler == nil {
-		return nil
+		return nil, nil
 	}
-	return t.handler(rule, obj)
+	return t.handler(rule, obj, cfg)
 }
