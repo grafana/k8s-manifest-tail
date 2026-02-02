@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/k8s-manifest-tail/internal/config"
 )
@@ -101,21 +100,4 @@ func TestWriterUsesClusterDirectoryForClusterScopedResources(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	path := filepath.Join(dir, "Node", "cluster", "node-a.yaml")
 	g.Expect(path).To(gomega.BeAnExistingFile())
-}
-
-func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
-	obj := &unstructured.Unstructured{}
-	obj.SetAPIVersion(apiVersion)
-	obj.SetKind(kind)
-	obj.SetNamespace(namespace)
-	obj.SetName(name)
-	obj.Object = map[string]interface{}{
-		"apiVersion": apiVersion,
-		"kind":       kind,
-		"metadata": map[string]interface{}{
-			"name":      name,
-			"namespace": namespace,
-		},
-	}
-	return obj
 }

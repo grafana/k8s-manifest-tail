@@ -18,5 +18,6 @@ type Processor interface {
 
 // NewProcessor returns the default manifest processor.
 func NewProcessor(cfg *config.Config) Processor {
-	return NewWriter(cfg.Output)
+	writer := NewWriter(cfg.Output)
+	return NewFilterProcessor(writer, RemoveStatusFilter{})
 }
