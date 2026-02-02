@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: green
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: green-pod
+  namespace: green
+spec:
+  containers:
+  - name: green-pod
+    image: nginx

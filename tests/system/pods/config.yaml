@@ -1,0 +1,11 @@
+output:
+  directory: expected/output
+
+excludeNamespaces:
+  - blue
+
+objects:
+  - apiVersion: v1
+    kind: Pod
+    namespaces:
+      - red
