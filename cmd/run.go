@@ -3,13 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/k8s-manifest-tail/internal/logging"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/grafana/k8s-manifest-tail/internal/discovery"
+	"github.com/grafana/k8s-manifest-tail/internal/logging"
 	"github.com/grafana/k8s-manifest-tail/internal/manifest"
+	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
 )
 
 var runCmd = &cobra.Command{
@@ -37,7 +38,12 @@ func runRun(cmd *cobra.Command, args []string) error {
 		SetManifestProcessor(manifest.NewProcessor(Configuration))
 	}
 
-	diffLogger := logging.NewDiffLogger(Configuration.Logging, cmd.OutOrStdout())
+	logger, shutdownTelemetry, err := telemetry.SetupLogging(ctx, Configuration.Logging)
+	if err != nil {
+		return fmt.Errorf("configure telemetry logging: %w", err)
+	}
+	defer func() { _ = shutdownTelemetry(context.Background()) }()
+	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
 
 	var total int
 	for _, rule := range Configuration.Objects {
@@ -55,6 +61,8 @@ func runRun(cmd *cobra.Command, args []string) error {
 			diffLogger.Log(diff)
 		}
 	}
+
+	//telemetry.Info(logger, fmt.Sprintf("Fetched %d manifest(s)", total))
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
 	return nil
 }

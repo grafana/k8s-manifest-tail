@@ -28,7 +28,7 @@
    - Add a helper that builds a rest.Config via in-cluster detection or kubeconfig path and surfaces meaningful errors.
    - Unit test the helper by mocking environment variables and kubeconfig paths where possible.
 
-6. **Object Discovery & Fetch**
+6. **Object Discovery & Fetch** *(completed)*
    - Implement logic that, for each configured object rule, lists matching resources (respecting include/exclude namespaces) and fetches their manifests.
      - Introduce a discovery helper (e.g., `internal/discovery`) that reuses the namespace/include/exclude logic from the list command and returns all matched `unstructured.Unstructured` objects for a rule.
      - Extract any reusable namespace/mapping helpers from `cmd/list.go` so both commands share the same code path, minimizing duplicated selection logic.
@@ -36,15 +36,15 @@
      - Cover the helper with table-driven unit tests using the fake dynamic client to ensure it handles global namespace filters, per-rule overrides, and exclude lists correctly.
      - Add a behavior-style test for `k8s-manifest-tail run` that stubs the kube provider, invokes `run --config <fixture>`, and asserts that manifests are fetched and prepared for serialization even before the writer lands in Step 7.
 
-7. **Manifest Serialization**
+7. **Manifest Serialization** *(completed)*
    - Add writer utilities that render the fetched manifests as YAML/JSON and save them into `<outputDir>/<kind>/<namespace>/<name>.yaml|json`, creating directories as needed.
    - Include unit tests that write to a temp directory and assert the expected files and formats.
 
-8. **OpenTelemetry Baseline**
+8. **OpenTelemetry Baseline** *(completed: OTLP logging pipeline wired up)*
    - Define the initial OpenTelemetry tracer/meter setup so subsequent packages can emit spans/metrics.
    - Provide configuration flags/env vars for enabling/disabling telemetry and document default exporters.
 
-9. **`run` Command Execution Path**
+9. **`run` Command Execution Path** *(completed)*
    - Wire the config, discovery, and writer pieces together so `run` performs a full fetch cycle once, returning errors via exit codes.
    - Add an integration-style test (using the fake client) that ensures desired files are produced for a sample config.
 

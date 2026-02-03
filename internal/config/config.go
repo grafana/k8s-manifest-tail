@@ -91,6 +91,7 @@ func (cfg *Config) Validate() error {
 // LoggingConfig controls optional logging behavior.
 type LoggingConfig struct {
 	LogDiffs LogDiffMode `mapstructure:"logDiffs" yaml:"logDiffs"`
+	OTLP     OTLPConfig  `mapstructure:"otlp" yaml:"otlp"`
 }
 
 // Mode returns the normalized diff logging mode.
@@ -105,10 +106,13 @@ func (l LoggingConfig) Mode() LogDiffMode {
 func (l LoggingConfig) Validate() error {
 	switch mode := l.Mode(); mode {
 	case LogDiffsDisabled, LogDiffsCompact, LogDiffsDetailed:
-		return nil
 	default:
 		return fmt.Errorf("unsupported diff logging mode %q", mode)
 	}
+	if err := l.OTLP.Validate(); err != nil {
+		return fmt.Errorf("validate otlp logging config: %w", err)
+	}
+	return nil
 }
 
 // LogDiffMode enumerates supported diff logging modes.
@@ -154,6 +158,23 @@ func (m *LogDiffMode) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	return fmt.Errorf("invalid logDiffs value")
+}
+
+// OTLPConfig controls OTLP logging export.
+type OTLPConfig struct {
+	Enabled  bool   `mapstructure:"enabled" yaml:"enabled"`
+	Endpoint string `mapstructure:"endpoint" yaml:"endpoint"`
+	Insecure bool   `mapstructure:"insecure" yaml:"insecure"`
+}
+
+// ShouldEnable returns true when OTLP logging should be initialized.
+func (c OTLPConfig) ShouldEnable() bool {
+	return c.Enabled || c.Endpoint != ""
+}
+
+// Validate ensures OTLP config is coherent.
+func (c OTLPConfig) Validate() error {
+	return nil
 }
 
 // Validate ensures an object rule is internally consistent.

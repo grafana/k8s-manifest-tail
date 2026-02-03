@@ -13,9 +13,13 @@ logging:
   # Whether to log manifest diffs. Options are `false` (disable diff logging), `compact` (mention objects that changed),
   # or `detailed` (print the diff itself)
   logDiffs: false
-
-  # The format of diff logging. Options are `human`, `json`, or `yaml`.
-  format: human
+  otlp:
+    # Enable exporting log records via OTLP in addition to stdout logging.
+    enabled: false
+    # Override the OTLP endpoint (host:port). Leave empty to use the OTLP environment defaults.
+    endpoint: ""
+    # Whether to use an insecure (non-TLS) OTLP connection.
+    insecure: false
 
 # When to fetch another full set of all objects
 refreshInterval: 1d
