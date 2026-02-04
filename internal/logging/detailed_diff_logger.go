@@ -79,7 +79,15 @@ func GetMinimalDifference(diff *manifest.Diff) (interface{}, interface{}) {
 	if diff == nil {
 		return nil, nil
 	}
-	return computeDiff(runtime.DeepCopyJSON(diff.Previous.Object), runtime.DeepCopyJSON(diff.Current.Object))
+	var prevMap map[string]interface{}
+	if diff.Previous != nil {
+		prevMap = runtime.DeepCopyJSON(diff.Previous.Object)
+	}
+	var currMap map[string]interface{}
+	if diff.Current != nil {
+		currMap = runtime.DeepCopyJSON(diff.Current.Object)
+	}
+	return computeDiff(prevMap, currMap)
 }
 
 func computeDiff(prev, curr map[string]interface{}) (map[string]interface{}, map[string]interface{}) {
