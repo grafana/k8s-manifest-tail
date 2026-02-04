@@ -13,6 +13,6 @@ func TestNullDiffLoggerDoesNothing(t *testing.T) {
 	g := gomega.NewWithT(t)
 	stub := &StubLogger{}
 	logger := logging.NewDiffLogger(config.LoggingConfig{LogDiffs: config.LogDiffsDisabled}, stub)
-	logger.Log(config.ObjectRule{}, nil, nil)
+	logger.Log(nil)
 	g.Expect(stub.records).To(gomega.HaveLen(0))
 }
