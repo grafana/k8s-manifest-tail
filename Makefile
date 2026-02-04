@@ -2,6 +2,10 @@ GOLANGCI_LINT ?= golangci-lint
 BINARY := k8s-manifest-tail
 BUILD_DIR := build
 
+VERSION := 0.0.1
+IMAGE ?= ghcr.io/grafana/$(BINARY)
+PLATFORMS ?= linux/arm64,linux/amd64
+
 .PHONY: all build clean lint lint-go lint-zizmor test help
 
 ##@ Build
@@ -13,6 +17,14 @@ build: $(BUILD_DIR)/$(BINARY) ## Compile the binary into the build directory
 $(BUILD_DIR)/$(BINARY): $(shell find . -name '*.go') go.mod go.sum
 	@mkdir -p $(BUILD_DIR)
 	go build -o $@ .
+
+build-image: $(BUILD_DIR)/image-built-$(VERSION)
+$(BUILD_DIR)/image-built-$(VERSION): operations/container/Dockerfile $(shell find . -name '*.go') go.mod go.sum
+	docker buildx build --platform $(PLATFORMS) --tag $(IMAGE):$(VERSION) --file operations/container/Dockerfile .
+	mkdir -p $(BUILD_DIR) && touch $(BUILD_DIR)/image-built-${VERSION}
+
+push-image: build/image-built-$(VERSION)
+	docker push $(IMAGE):$(VERSION)
 
 clean: ## Remove build artifacts
 	rm -rf $(BUILD_DIR)
