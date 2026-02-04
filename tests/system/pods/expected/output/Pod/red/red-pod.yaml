@@ -4,6 +4,8 @@ metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
       {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"red-pod","namespace":"red"},"spec":{"containers":[{"env":[{"name":"COLOR","value":"red"},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"nginx","name":"red-pod"}]}}
+  labels:
+    color: redredred
   name: red-pod
   namespace: red
 spec:

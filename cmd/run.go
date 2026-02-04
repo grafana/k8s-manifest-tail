@@ -3,13 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/pkg"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/grafana/k8s-manifest-tail/internal/discovery"
 	"github.com/grafana/k8s-manifest-tail/internal/logging"
-	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
 )
 
@@ -33,11 +32,6 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create kubernetes clients: %w", err)
 	}
 
-	fetcher := discovery.NewFetcher(clients, Configuration)
-	if manifestProcessor == nil {
-		SetManifestProcessor(manifest.NewProcessor(Configuration))
-	}
-
 	logger, shutdownTelemetry, err := telemetry.SetupLogging(ctx, Configuration.Logging)
 	if err != nil {
 		return fmt.Errorf("configure telemetry logging: %w", err)
@@ -45,31 +39,17 @@ func runRun(cmd *cobra.Command, args []string) error {
 	defer func() { _ = shutdownTelemetry(context.Background()) }()
 	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
 
-	var total int
-	for _, rule := range Configuration.Objects {
-		objects, err := fetcher.FetchResources(ctx, rule)
-		if err != nil {
-			return err
-		}
-		for i := range objects {
-			obj := objects[i].DeepCopy()
-			total++
-			diff, err := manifestProcessor.Process(rule, obj, Configuration)
-			if err != nil {
-				return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
-			}
-			diffLogger.Log(diff)
-		}
+	tail := pkg.Tail{
+		Clients:    clients,
+		Config:     Configuration,
+		DiffLogger: diffLogger,
+		Processor:  GetManifestProcessor(),
 	}
 
-	//telemetry.Info(logger, fmt.Sprintf("Fetched %d manifest(s)", total))
+	total, err := tail.RunFullManifestCheck(ctx)
+	if err != nil {
+		return err
+	}
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
 	return nil
-}
-
-var manifestProcessor manifest.Processor
-
-// SetManifestProcessor overrides the manifest processor used by the run command (primarily for tests).
-func SetManifestProcessor(p manifest.Processor) {
-	manifestProcessor = p
 }

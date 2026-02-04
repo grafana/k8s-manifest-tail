@@ -101,3 +101,25 @@ func TestWriterUsesClusterDirectoryForClusterScopedResources(t *testing.T) {
 	path := filepath.Join(dir, "Node", "cluster", "node-a.yaml")
 	g.Expect(path).To(gomega.BeAnExistingFile())
 }
+
+func TestWriterDeletesManifest(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+
+	dir := t.TempDir()
+	writer := NewWriter(config.OutputConfig{
+		Directory: dir,
+		Format:    config.OutputFormatYAML,
+	})
+
+	rule := config.ObjectRule{Kind: "Pod"}
+	obj := newUnstructured("v1", "Pod", "default", "api")
+	_, err := writer.Process(rule, obj, nil)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	err = writer.Delete(rule, obj, nil)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	path := filepath.Join(dir, "Pod", "default", "api.yaml")
+	g.Expect(path).NotTo(gomega.BeAnExistingFile())
+}

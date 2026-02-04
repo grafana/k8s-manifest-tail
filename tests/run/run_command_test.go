@@ -142,3 +142,7 @@ func (t *testProcessor) Process(rule config.ObjectRule, obj *unstructured.Unstru
 	}
 	return t.handler(rule, obj, cfg)
 }
+
+func (t *testProcessor) Delete(config.ObjectRule, *unstructured.Unstructured, *config.Config) error {
+	return nil
+}

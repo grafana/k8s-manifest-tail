@@ -14,6 +14,7 @@ type Diff struct {
 // Processor handles manifests retrieved from the cluster.
 type Processor interface {
 	Process(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) (*Diff, error)
+	Delete(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) error
 }
 
 // NewProcessor returns the default manifest processor.

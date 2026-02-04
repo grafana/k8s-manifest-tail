@@ -35,3 +35,13 @@ func (p *FilterProcessor) Process(rule config.ObjectRule, obj *unstructured.Unst
 	}
 	return p.next.Process(rule, obj, cfg)
 }
+
+// Delete applies filters before delegating deletion to the next processor.
+func (p *FilterProcessor) Delete(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) error {
+	for _, filter := range p.filters {
+		if err := filter.Apply(obj); err != nil {
+			return fmt.Errorf("apply filter: %w", err)
+		}
+	}
+	return p.next.Delete(rule, obj, cfg)
+}

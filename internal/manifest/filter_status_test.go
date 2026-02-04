@@ -18,6 +18,10 @@ func (s *stubProcessor) Process(rule config.ObjectRule, obj *unstructured.Unstru
 	return nil, nil
 }
 
+func (s *stubProcessor) Delete(config.ObjectRule, *unstructured.Unstructured, *config.Config) error {
+	return nil
+}
+
 func TestFilterProcessorRemovesStatus(t *testing.T) {
 	t.Parallel()
 	g := gomega.NewWithT(t)

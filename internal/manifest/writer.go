@@ -76,6 +76,21 @@ func (w *Writer) Process(rule config.ObjectRule, obj *unstructured.Unstructured,
 	}, nil
 }
 
+// Delete removes the manifest for the supplied object from disk.
+func (w *Writer) Delete(rule config.ObjectRule, obj *unstructured.Unstructured, _ *config.Config) error {
+	if err := w.ensureBaseDir(); err != nil {
+		return err
+	}
+	kindDir := filepath.Join(w.baseDir, sanitizePathSegment(rule.Kind))
+	nsDir := filepath.Join(kindDir, sanitizePathSegment(namespaceSegment(obj.GetNamespace())))
+	fileName := fmt.Sprintf("%s.%s", sanitizePathSegment(obj.GetName()), w.extension())
+	path := filepath.Join(nsDir, fileName)
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove manifest %s: %w", path, err)
+	}
+	return nil
+}
+
 func (w *Writer) ensureBaseDir() error {
 	if w.baseDir == "" {
 		return fmt.Errorf("output directory is required")
