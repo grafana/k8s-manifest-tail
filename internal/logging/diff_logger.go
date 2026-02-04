@@ -16,7 +16,7 @@ func NewDiffLogger(cfg config.LoggingConfig, logger log.Logger) DiffLogger {
 	if cfg.Mode() == config.LogDiffsCompact {
 		return &CompactDiffLogger{logger: logger}
 	} else if cfg.Mode() == config.LogDiffsDetailed {
-		return &CompactDiffLogger{logger: logger}
+		return &DetailedDiffLogger{logger: logger}
 	}
 	return &NullDiffLogger{}
 }
