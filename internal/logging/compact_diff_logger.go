@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// CompactDiffLogger prints a compact diff statement
+// CompactDiffLogger prints a compact diff statement.
 type CompactDiffLogger struct {
 	logger log.Logger
 }
@@ -23,8 +23,7 @@ func (l *CompactDiffLogger) Log(diff *manifest.Diff) {
 	action := "modified"
 	if diff.Previous == nil {
 		action = "created"
-	}
-	if target == nil {
+	} else if target == nil {
 		target = diff.Previous
 		action = "deleted"
 	}
