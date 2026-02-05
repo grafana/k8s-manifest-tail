@@ -55,10 +55,10 @@ type listPrinter struct {
 
 func (p *listPrinter) Print(rule config.ObjectRule, namespace, name string) {
 	if !p.headerPrinted {
-		_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", "KIND", "API VERSION", "NAMESPACE", "NAME")
+		_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", "API VERSION", "KIND", "NAMESPACE", "NAME")
 		p.headerPrinted = true
 	}
-	_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", rule.Kind, rule.APIVersion, namespaceOrDash(namespace), name)
+	_, _ = fmt.Fprintf(p.out, "%-15s %-15s %-20s %s\n", rule.APIVersion, rule.Kind, namespaceOrDash(namespace), name)
 	p.itemsPrinted = true
 }
 
