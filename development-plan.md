@@ -16,8 +16,8 @@
    - Implement a small package that reads the YAML config, applies command-line overrides, and validates required fields (e.g., at least one object definition, supported output formats).
    - Cover parsing/validation with table-driven tests using in-memory YAML strings.
 
-3. **CLI Skeleton** *(completed: Cobra root with describe/list/run/run-and-watch commands and shared flags)*
-   - Introduce Cobra with three commands: `list`, `run`, and `run-and-watch`.
+3. **CLI Skeleton** *(completed: Cobra root with describe/list/run-once/run commands and shared flags)*
+   - Introduce Cobra with three commands: `list`, `run-once`, and `run`.
    - Wire up shared persistent flags (kubeconfig, output directory/format, refresh interval, namespace filters) and ensure `k8s-manifest-tail list` prints configured targets using the loaded config.
 
 4. **Behavior-Driven Test Harness** *(completed: Ginkgo CLI tests for --help/describe added)*
@@ -48,7 +48,7 @@
    - Wire the config, discovery, and writer pieces together so `run` performs a full fetch cycle once, returning errors via exit codes.
    - Add an integration-style test (using the fake client) that ensures desired files are produced for a sample config.
 
-10. **`run-and-watch` Continuous Mode**
+10. **`run` Continuous Mode**
    - Introduce informers/watchers for each requested kind so the tool updates or removes manifests on add/update/delete events.
    - Provide a mechanism to respect `refreshInterval` for periodic full syncs and ensure graceful shutdown (context cancellation, signal handling).
 
@@ -61,5 +61,5 @@
    - Extend object rules with optional label selectors for finer-grained discovery.
 
 13. **Change Logging**
-   - Add an optional stdout change log for `run-and-watch` that surfaces only the diffs between manifest revisions so operators can follow updates without inspecting files.
+   - Add an optional stdout change log for `run` that surfaces only the diffs between manifest revisions so operators can follow updates without inspecting files.
    - Expose a flag/config toggle to enable or disable the change log and ensure it gracefully degrades when diffs cannot be computed.

@@ -10,8 +10,8 @@ This utility supports a few methods for running:
 
 * `describe` - Reads the config file and prints a human description of what resources will be fetched (e.g., "Deployments in the `default` namespace"). Useful for validating your configuration before contacting the cluster.
 * `list` - Simply list the objects that would be detected by this utility. Runs and exits.
-* `run` - Runs once, gathering the manifest files and exiting.
-* `run-and-watch` - Runs once, gathering the manifest files, and then sets up watchers to monitor for additions, 
+* `run-once` - Runs once, gathering the manifest files and exiting.
+* `run` - Runs once, gathering the manifest files, and then sets up watchers to monitor for additions, 
   deletions, or modifications and updates or deletes those manifest files.
 
 ## Configuration

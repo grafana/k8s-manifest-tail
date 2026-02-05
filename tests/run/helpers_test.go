@@ -67,7 +67,7 @@ func newRESTMapper(mappings []resourceMapping) meta.RESTMapper {
 }
 
 func runRunCommand(configPath string, args ...string) (string, string, error) {
-	allArgs := append([]string{"run", "--config", configPath}, args...)
+	allArgs := append([]string{"run-once", "--config", configPath}, args...)
 	var stdout, stderr bytes.Buffer
 	err := cmd.ExecuteWithArgs(allArgs, &stdout, &stderr)
 	cmd.ResetConfiguration()

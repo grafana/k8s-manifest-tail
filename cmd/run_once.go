@@ -2,27 +2,29 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/pkg"
+	"time"
+
+	"github.com/spf13/cobra"
+
 	"github.com/grafana/k8s-manifest-tail/internal/logging"
 	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
-	"github.com/grafana/k8s-manifest-tail/pkg"
-	"github.com/spf13/cobra"
 )
 
-var runAndWatchCmd = &cobra.Command{
-	Use:     "run-and-watch",
-	Short:   "Fetch manifests and keep watching for changes",
+var runCmd = &cobra.Command{
+	Use:     "run-once",
+	Short:   "Fetch manifests once and exit",
 	PreRunE: LoadConfiguration,
-	RunE:    runRunAndWatch,
+	RunE:    runRunOnce,
 }
 
 func init() {
-	rootCmd.AddCommand(runAndWatchCmd)
+	rootCmd.AddCommand(runCmd)
 }
 
-func runRunAndWatch(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(cmd.Context())
+func runRunOnce(cmd *cobra.Command, args []string) error {
+	ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 	defer cancel()
 
 	clients, err := GetKubeProvider().Provide(Configuration)
@@ -43,15 +45,11 @@ func runRunAndWatch(cmd *cobra.Command, args []string) error {
 		DiffLogger: diffLogger,
 		Processor:  GetManifestProcessor(),
 	}
+
 	total, err := tail.RunFullManifestCheck(ctx)
 	if err != nil {
 		return err
 	}
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
-
-	err = tail.WatchResources(ctx)
-	if err != nil && !errors.Is(err, context.Canceled) {
-		return err
-	}
 	return nil
 }
