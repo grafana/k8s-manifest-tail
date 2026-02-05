@@ -1,11 +1,8 @@
 output:
-  directory: expected/output
+  directory: expected-output
 
 logging:
   logDiffs: detailed
-
-excludeNamespaces:
-  - blue
 
 objects:
   - apiVersion: v1

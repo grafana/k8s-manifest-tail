@@ -82,6 +82,26 @@ func TestConfigValidateInvokesRuleValidation(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 }
 
+func TestApplyEnvOverrides(t *testing.T) {
+	g := gomega.NewWithT(t)
+	cfg := &Config{}
+	t.Setenv("K8S_MANIFEST_TAIL_OUTPUT_DIRECTORY", "from-env")
+	t.Setenv("K8S_MANIFEST_TAIL_OUTPUT_FORMAT", "JSON")
+	t.Setenv("K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS", "compact")
+	t.Setenv("K8S_MANIFEST_TAIL_REFRESH_INTERVAL", "2h")
+	t.Setenv("K8S_MANIFEST_TAIL_NAMESPACES", "default,prod")
+	t.Setenv("K8S_MANIFEST_TAIL_EXCLUDE_NAMESPACES", "kube-system")
+
+	ApplyEnvOverrides(cfg)
+
+	g.Expect(cfg.Output.Directory).To(gomega.Equal("from-env"))
+	g.Expect(cfg.Output.Format).To(gomega.Equal(OutputFormatJSON))
+	g.Expect(cfg.Logging.LogDiffs).To(gomega.Equal(LogDiffsCompact))
+	g.Expect(cfg.RefreshInterval).To(gomega.Equal("2h"))
+	g.Expect(cfg.Namespaces).To(gomega.Equal([]string{"default", "prod"}))
+	g.Expect(cfg.ExcludeNamespaces).To(gomega.Equal([]string{"kube-system"}))
+}
+
 func TestLoggingConfigUnmarshalBool(t *testing.T) {
 	t.Parallel()
 

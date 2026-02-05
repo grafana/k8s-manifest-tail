@@ -42,15 +42,3 @@ func init() {
 	rootCmd.PersistentFlags().StringSliceVarP(&namespacesOverride, "namespaces", "n", nil, "Namespaces to include globally (overrides config file)")
 	rootCmd.PersistentFlags().StringSliceVar(&excludeNamespacesOverride, "exclude-namespaces", nil, "Namespaces to exclude globally (overrides config file)")
 }
-
-func RunSequentially(funcs ...func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		for _, fn := range funcs {
-			err := fn(cmd, args)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}

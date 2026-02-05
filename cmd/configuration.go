@@ -16,6 +16,8 @@ func LoadConfiguration(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	config.ApplyEnvOverrides(cfg)
+
 	if kubeconfigOverride != "" {
 		cfg.Kubeconfig = kubeconfigOverride
 	}

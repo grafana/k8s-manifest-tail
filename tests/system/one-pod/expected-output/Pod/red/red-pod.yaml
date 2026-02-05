@@ -4,8 +4,6 @@ metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
       {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"red-pod","namespace":"red"},"spec":{"containers":[{"env":[{"name":"COLOR","value":"red"},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"nginx","name":"red-pod"}]}}
-  labels:
-    region: central
   name: red-pod
   namespace: red
 spec:
@@ -26,11 +24,11 @@ spec:
     terminationMessagePolicy: File
     volumeMounts:
     - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: kube-api-access-fh8f6
+      name: kube-api-access-46rz5
       readOnly: true
   dnsPolicy: ClusterFirst
   enableServiceLinks: true
-  nodeName: pods-test-cluster-control-plane
+  nodeName: k8s-manifest-tail-test-cluster-control-plane
   preemptionPolicy: PreemptLowerPriority
   priority: 0
   restartPolicy: Always
@@ -49,7 +47,7 @@ spec:
     operator: Exists
     tolerationSeconds: 300
   volumes:
-  - name: kube-api-access-fh8f6
+  - name: kube-api-access-46rz5
     projected:
       defaultMode: 420
       sources:

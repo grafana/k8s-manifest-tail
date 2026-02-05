@@ -67,6 +67,31 @@ func Load(path string) (*Config, error) {
 	return &cfg, nil
 }
 
+// ApplyEnvOverrides applies environment variable overrides for selected fields.
+func ApplyEnvOverrides(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_OUTPUT_DIRECTORY")); value != "" {
+		cfg.Output.Directory = value
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_OUTPUT_FORMAT")); value != "" {
+		cfg.Output.Format = OutputFormat(strings.ToLower(value))
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS")); value != "" {
+		cfg.Logging.LogDiffs = LogDiffMode(strings.ToLower(value))
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_REFRESH_INTERVAL")); value != "" {
+		cfg.RefreshInterval = value
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_NAMESPACES")); value != "" {
+		cfg.Namespaces = strings.Split(value, ",")
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_EXCLUDE_NAMESPACES")); value != "" {
+		cfg.ExcludeNamespaces = strings.Split(value, ",")
+	}
+}
+
 // Validate ensures the configuration is internally consistent.
 func (cfg *Config) Validate() error {
 	if err := cfg.Logging.Validate(); err != nil {

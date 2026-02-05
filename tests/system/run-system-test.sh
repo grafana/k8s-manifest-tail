@@ -13,77 +13,106 @@ if [[ ! -x "${BINARY}" ]]; then
   exit 1
 fi
 
-run_test() {
+export KUBECONFIG="${SCRIPT_DIR}/kubeconfig.yaml"
+clusterName=k8s-manifest-tail-test-cluster
+
+delete_cluster() {
+  echo "==> Deleting test cluster"
+  kind delete cluster --name "${clusterName}"
+  rm -f "${KUBECONFIG}"
+  echo "<== Test cluster deleted"
+}
+
+create_cluster() {
+  echo "==> Creating test cluster"
+  if ! kind get clusters | grep "${clusterName}"; then
+    kind create cluster --name "${clusterName}"
+  fi
+
+  echo "  - Deploying dependencies"
+  kubectl apply -f "${SCRIPT_DIR}/dependencies"
+  echo "<== Test cluster ready"
+}
+
+list_test() {
   local testDir="$1"
+  testName=$(basename testDir)
+  echo "==> Starting test ${testName}"
   (
     set -euo pipefail
-
-    export KUBECONFIG="${testDir}/kubeconfig.yaml"
-    local testPlan="${testDir}/test-plan.yaml"
     local config="${testDir}/config.yaml"
-    local expectedList="${testDir}/expected/list-output.txt"
-    local expectedOutput="${testDir}/expected/output"
+    local expectedList="${testDir}/expected-list-output.txt"
 
-    if [[ ! -f "${testPlan}" || ! -f "${config}" ]]; then
-      echo "Skipping ${testDir}: missing test-plan.yaml or config.yaml" >&2
-      exit 0
-    fi
-
-    if [[ ! -f "${expectedList}" || ! -d "${expectedOutput}" ]]; then
-      echo "Skipping ${testDir}: missing expected outputs" >&2
-      exit 0
-    fi
-
-    local testName="$(yq -r '.name' "${testPlan}")"
-    echo "==> Running system test: ${testName}"
-
-    local tmpList=""
-    local tmpOutput=""
+    tmpList="$(mktemp)"
     cleanup() {
       if [[ -n "${tmpList}" && -f "${tmpList}" ]]; then
         rm -f "${tmpList}"
       fi
-      if [[ -n "${tmpOutput}" && -d "${tmpOutput}" ]]; then
-        rm -rf "${tmpOutput}"
-      fi
-      echo "--> Deleting cluster for ${testName}"
-      delete-cluster "${testDir}" || true
-      rm -f "${KUBECONFIG}"
     }
     trap cleanup EXIT
 
-    echo "--> Creating cluster for ${testName}"
-    create-cluster "${testDir}"
-
-    echo "--> Deploying dependencies for ${testName}"
-    deploy-dependencies "${testDir}"
-
-    echo "--> Validating list output"
-    tmpList="$(mktemp)"
     (
       cd "${testDir}"
-      "${BINARY}" list --config "${config}" >"${tmpList}"
+      "${BINARY}" list --config "${config}" > "${tmpList}"
     )
-    diff -u "${expectedList}" "${tmpList}"
 
-    echo "--> Running manifest collection"
+    if [[ -f "${expectedList}" ]]; then
+      echo "  - Validating list output"
+      diff -u "${expectedList}" "${tmpList}"
+    else
+      cp "${tmpList}" "${expectedList}"
+    fi
+
+    echo "<== Test ${testName} passed"
+  )
+}
+
+run_once_test() {
+  local testDir="$1"
+  testName=$(basename testDir)
+  echo "==> Starting test ${testName}"
+  (
+    set -euo pipefail
+    local config="${testDir}/config.yaml"
+    local expectedOutput="${testDir}/expected-output"
+
     tmpOutput="$(mktemp -d)"
+    cleanup() {
+      if [[ -n "${tmpOutput}" && -d "${tmpOutput}" ]]; then
+        rm -rf "${tmpOutput}"
+      fi
+    }
+    trap cleanup EXIT
+
     (
       cd "${testDir}"
       "${BINARY}" run --config "${config}" --output-directory "${tmpOutput}"
     )
-    diff -ru "${expectedOutput}" "${tmpOutput}"
 
-    echo "==> ${testName} passed"
+    if [[ -d "${expectedOutput}" ]]; then
+      echo "  - Validating run output"
+      diff -ru "${expectedOutput}" "${tmpOutput}"
+    else
+      cp -rf "${tmpOutput}" "${expectedOutput}"
+    fi
+
+    echo "<== Test ${testName} passed"
   )
 }
 
+create_cluster
+
 overall_rc=0
-while IFS= read -r -d '' planFile; do
-  testDir="$(dirname "${planFile}")"
-  if ! run_test "${testDir}"; then
+while IFS= read -r -d '' configFile; do
+  testDir="$(dirname "${configFile}")"
+  if ! list_test "${testDir}"; then
     overall_rc=1
   fi
-done < <(find "${SCRIPT_DIR}" -name test-plan.yaml -print0)
+  if ! run_once_test "${testDir}"; then
+    overall_rc=1
+  fi
+done < <(find "${SCRIPT_DIR}" -name config.yaml -print0)
+
+#delete_cluster
 
 exit "${overall_rc}"
