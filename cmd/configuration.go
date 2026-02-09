@@ -45,6 +45,9 @@ func LoadConfiguration(cmd *cobra.Command, args []string) error {
 	if refreshIntervalOverride != "" {
 		cfg.RefreshInterval = refreshIntervalOverride
 	}
+	if cfg.RefreshInterval == "" {
+		cfg.RefreshInterval = config.DefaultRefreshInterval
+	}
 
 	if len(namespacesOverride) > 0 {
 		cfg.Namespaces = namespacesOverride
@@ -59,7 +62,7 @@ func LoadConfiguration(cmd *cobra.Command, args []string) error {
 	}
 
 	Configuration = cfg
-	return nil
+	return Configuration.Validate()
 }
 
 func validateOutputFormat(format config.OutputFormat) error {

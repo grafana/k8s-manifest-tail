@@ -86,7 +86,7 @@ run_once_test() {
 
     (
       cd "${testDir}"
-      "${BINARY}" run --config "${config}" --output-directory "${tmpOutput}"
+      "${BINARY}" run-once --config "${config}" --output-directory "${tmpOutput}"
     )
 
     if [[ -d "${expectedOutput}" ]]; then

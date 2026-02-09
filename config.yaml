@@ -25,7 +25,7 @@ logging:
 
 # When to fetch another full set of all objects
 # Can use the environment variable: K8S_MANIFEST_TAIL_REFRESH_INTERVAL
-refreshInterval: 1d
+refreshInterval: 24h
 
 # Namespaces to look for any objects
 # Can use the environment variable: K8S_MANIFEST_TAIL_NAMESPACES

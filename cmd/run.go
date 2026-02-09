@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
 	"github.com/grafana/k8s-manifest-tail/pkg"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var runAndWatchCmd = &cobra.Command{
@@ -49,9 +50,43 @@ func runRun(cmd *cobra.Command, args []string) error {
 	}
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
 
+	refreshErrCh := make(chan error, 1)
+	refreshInterval, _ := Configuration.GetRefreshInterval() // Error checked during config validation
+	ticker := time.NewTicker(refreshInterval)
+	defer ticker.Stop()
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				total, runErr := tail.RunFullManifestCheck(ctx)
+				if runErr != nil {
+					if !errors.Is(runErr, context.Canceled) {
+						select {
+						case refreshErrCh <- runErr:
+						default:
+						}
+					}
+					cancel()
+					return
+				}
+				_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
+			}
+		}
+	}()
+
 	err = tail.WatchResources(ctx)
+	cancel()
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return err
+	}
+	select {
+	case runErr := <-refreshErrCh:
+		if runErr != nil && !errors.Is(runErr, context.Canceled) {
+			return runErr
+		}
+	default:
 	}
 	return nil
 }

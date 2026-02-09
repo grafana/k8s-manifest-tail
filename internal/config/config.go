@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -12,8 +13,9 @@ import (
 type OutputFormat string
 
 const (
-	OutputFormatYAML OutputFormat = "yaml"
-	OutputFormatJSON OutputFormat = "json"
+	DefaultRefreshInterval string       = "24h"
+	OutputFormatYAML       OutputFormat = "yaml"
+	OutputFormatJSON       OutputFormat = "json"
 )
 
 // OutputConfig controls how manifests are written.
@@ -31,13 +33,14 @@ type ObjectRule struct {
 
 // Config captures all supported configuration settings.
 type Config struct {
-	Kubeconfig        string        `mapstructure:"kubeconfig" yaml:"kubeconfig"`
-	Output            OutputConfig  `mapstructure:"output" yaml:"output"`
-	Logging           LoggingConfig `mapstructure:"logging" yaml:"logging"`
-	RefreshInterval   string        `mapstructure:"refreshInterval" yaml:"refreshInterval"`
-	Namespaces        []string      `mapstructure:"namespaces" yaml:"namespaces"`
-	ExcludeNamespaces []string      `mapstructure:"excludeNamespaces" yaml:"excludeNamespaces"`
-	Objects           []ObjectRule  `mapstructure:"objects" yaml:"objects"`
+	Kubeconfig              string        `mapstructure:"kubeconfig" yaml:"kubeconfig"`
+	Output                  OutputConfig  `mapstructure:"output" yaml:"output"`
+	Logging                 LoggingConfig `mapstructure:"logging" yaml:"logging"`
+	RefreshInterval         string        `mapstructure:"refreshInterval" yaml:"refreshInterval"`
+	RefreshIntervalDuration time.Duration
+	Namespaces              []string     `mapstructure:"namespaces" yaml:"namespaces"`
+	ExcludeNamespaces       []string     `mapstructure:"excludeNamespaces" yaml:"excludeNamespaces"`
+	Objects                 []ObjectRule `mapstructure:"objects" yaml:"objects"`
 }
 
 // Load reads configuration data from the supplied file path.
@@ -58,10 +61,6 @@ func Load(path string) (*Config, error) {
 	var cfg Config
 	if err := decoder.Decode(&cfg); err != nil {
 		return nil, fmt.Errorf("decode config: %w", err)
-	}
-
-	if err := cfg.Validate(); err != nil {
-		return nil, err
 	}
 
 	return &cfg, nil
@@ -110,7 +109,19 @@ func (cfg *Config) Validate() error {
 	if err != nil {
 		return fmt.Errorf("global exclusion namespaces has duplicate: %w", err)
 	}
+	_, err = cfg.GetRefreshInterval()
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (cfg *Config) GetRefreshInterval() (time.Duration, error) {
+	duration, err := time.ParseDuration(cfg.RefreshInterval)
+	if err != nil {
+		return 0, fmt.Errorf("invalid refresh interval %q: %w", cfg.RefreshInterval, err)
+	}
+	return duration, nil
 }
 
 // LoggingConfig controls optional logging behavior.
