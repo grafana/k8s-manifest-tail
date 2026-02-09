@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega"
 )
@@ -80,6 +81,27 @@ func TestConfigValidateInvokesRuleValidation(t *testing.T) {
 
 	err := cfg.Validate()
 	g.Expect(err).NotTo(gomega.HaveOccurred())
+}
+
+func TestGetRefreshInterval(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	cfg := &Config{}
+	duration, err := cfg.GetRefreshInterval()
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(duration).To(gomega.Equal(24 * time.Hour))
+
+	cfg.RefreshInterval = "2h30m"
+	duration, err = cfg.GetRefreshInterval()
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(duration).To(gomega.Equal(2*time.Hour + 30*time.Minute))
+
+	cfg.RefreshInterval = "oops"
+	_, err = cfg.GetRefreshInterval()
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(err.Error()).To(gomega.ContainSubstring("invalid refresh interval"))
 }
 
 func TestApplyEnvOverrides(t *testing.T) {

@@ -117,9 +117,13 @@ func (cfg *Config) Validate() error {
 }
 
 func (cfg *Config) GetRefreshInterval() (time.Duration, error) {
-	duration, err := time.ParseDuration(cfg.RefreshInterval)
+	interval := cfg.RefreshInterval
+	if strings.TrimSpace(interval) == "" {
+		interval = DefaultRefreshInterval
+	}
+	duration, err := time.ParseDuration(interval)
 	if err != nil {
-		return 0, fmt.Errorf("invalid refresh interval %q: %w", cfg.RefreshInterval, err)
+		return 0, fmt.Errorf("invalid refresh interval %q: %w", interval, err)
 	}
 	return duration, nil
 }
