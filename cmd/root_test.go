@@ -15,7 +15,6 @@ func TestLoadConfigWithOverrides(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	configPath = writeTempConfigFile(t, `
-kubeconfig: "/tmp/kubeconfig"
 output:
   directory: from-config
   format: yaml
@@ -26,6 +25,7 @@ objects:
     kind: Pod
 `)
 
+	kubeconfigOverride = "/tmp/flag-kubeconfig"
 	outputDirOverride = "custom-dir"
 	outputFormatOverride = "json"
 	refreshIntervalOverride = "2h"
@@ -35,6 +35,7 @@ objects:
 	err := LoadConfiguration(nil, nil)
 
 	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(Configuration.KubeconfigPath).To(gomega.Equal("/tmp/flag-kubeconfig"))
 	g.Expect(Configuration.Output.Directory).To(gomega.Equal("custom-dir"))
 	g.Expect(string(Configuration.Output.Format)).To(gomega.Equal("json"))
 	g.Expect(Configuration.RefreshInterval).To(gomega.Equal("2h"))

@@ -33,7 +33,6 @@ type ObjectRule struct {
 
 // Config captures all supported configuration settings.
 type Config struct {
-	Kubeconfig              string        `mapstructure:"kubeconfig" yaml:"kubeconfig"`
 	Output                  OutputConfig  `mapstructure:"output" yaml:"output"`
 	Logging                 LoggingConfig `mapstructure:"logging" yaml:"logging"`
 	RefreshInterval         string        `mapstructure:"refreshInterval" yaml:"refreshInterval"`
@@ -41,6 +40,7 @@ type Config struct {
 	Namespaces              []string     `mapstructure:"namespaces" yaml:"namespaces"`
 	ExcludeNamespaces       []string     `mapstructure:"excludeNamespaces" yaml:"excludeNamespaces"`
 	Objects                 []ObjectRule `mapstructure:"objects" yaml:"objects"`
+	KubeconfigPath          string       `yaml:"-" mapstructure:"-"`
 }
 
 // Load reads configuration data from the supplied file path.

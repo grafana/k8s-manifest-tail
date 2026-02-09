@@ -2,7 +2,6 @@ package kube
 
 import (
 	"fmt"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/discovery"
 	memdiscovery "k8s.io/client-go/discovery/cached/memory"
@@ -33,7 +32,7 @@ func NewProvider() Provider {
 }
 
 func (p *defaultProvider) Provide(cfg *config.Config) (*Clients, error) {
-	restCfg, err := buildRestConfig(cfg.Kubeconfig)
+	restCfg, err := buildRestConfig(cfg.KubeconfigPath)
 	if err != nil {
 		return nil, err
 	}

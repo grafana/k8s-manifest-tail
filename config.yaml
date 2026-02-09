@@ -1,6 +1,3 @@
-# kubeconfig points to the Kubernetes config file to use (defaults to empty for auto-detect)
-kubeconfig: ""
-
 # Configuration for manifest output
 output:
   # The directory path, relative to the working directory, where to store manifest files.

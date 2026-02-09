@@ -17,7 +17,6 @@ func TestLoad(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")
 	content := `
-kubeconfig: "/tmp/kubeconfig"
 output:
   directory: out
   format: json
@@ -33,7 +32,6 @@ objects:
 
 	cfg, err := Load(path)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
-	g.Expect(cfg.Kubeconfig).To(gomega.Equal("/tmp/kubeconfig"))
 	g.Expect(cfg.Output.Directory).To(gomega.Equal("out"))
 	g.Expect(cfg.Output.Format).To(gomega.Equal(OutputFormatJSON))
 	g.Expect(cfg.Logging.Mode()).To(gomega.Equal(LogDiffsCompact))

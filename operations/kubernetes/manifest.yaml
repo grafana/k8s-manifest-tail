@@ -76,7 +76,6 @@ metadata:
   namespace: k8s-manifest-tail
 data:
   config.yaml: |
-    kubeconfig: ""
     output:
       directory: /var/lib/k8s-manifests
       format: yaml
