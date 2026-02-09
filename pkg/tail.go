@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/k8s-manifest-tail/internal/kube"
 	"github.com/grafana/k8s-manifest-tail/internal/logging"
 	"github.com/grafana/k8s-manifest-tail/internal/manifest"
+	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +24,7 @@ type Tail struct {
 	Config     *config.Config
 	DiffLogger logging.DiffLogger
 	Processor  manifest.Processor
+	Metrics    *telemetry.Metrics
 }
 
 func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
@@ -42,6 +44,9 @@ func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
 			}
 			t.DiffLogger.Log(diff)
 		}
+	}
+	if t.Metrics != nil {
+		t.Metrics.RecordFullRun(ctx, total)
 	}
 	return total, nil
 }

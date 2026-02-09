@@ -48,7 +48,7 @@
    - Wire the config, discovery, and writer pieces together so `run` performs a full fetch cycle once, returning errors via exit codes.
    - Add an integration-style test (using the fake client) that ensures desired files are produced for a sample config.
 
-10. **`run` Continuous Mode**
+10. **`run` Continuous Mode** *(completed)*
    - Introduce informers/watchers for each requested kind so the tool updates or removes manifests on add/update/delete events.
    - Provide a mechanism to respect `refreshInterval` for periodic full syncs and ensure graceful shutdown (context cancellation, signal handling).
 

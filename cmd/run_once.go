@@ -37,6 +37,11 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("configure telemetry logging: %w", err)
 	}
 	defer func() { _ = shutdownTelemetry(context.Background()) }()
+	metrics, shutdownMetrics, err := telemetry.SetupMetrics(ctx, Configuration.Logging)
+	if err != nil {
+		return fmt.Errorf("configure telemetry metrics: %w", err)
+	}
+	defer func() { _ = shutdownMetrics(context.Background()) }()
 	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
 
 	tail := pkg.Tail{
@@ -44,6 +49,7 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 		Config:     Configuration,
 		DiffLogger: diffLogger,
 		Processor:  GetManifestProcessor(),
+		Metrics:    metrics,
 	}
 
 	total, err := tail.RunFullManifestCheck(ctx)
