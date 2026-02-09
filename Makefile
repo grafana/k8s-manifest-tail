@@ -2,7 +2,9 @@ GOLANGCI_LINT ?= golangci-lint
 BINARY := k8s-manifest-tail
 BUILD_DIR := build
 
-VERSION := 0.0.1
+VERSION ?= $(shell cat VERSION 2>/dev/null || echo dev)
+GIT_COMMIT ?= $(shell git rev-parse HEAD 2>/dev/null || echo "")
+LDFLAGS := -X github.com/grafana/k8s-manifest-tail/cmd.version=$(VERSION) -X github.com/grafana/k8s-manifest-tail/cmd.gitCommit=$(GIT_COMMIT)
 IMAGE ?= ghcr.io/grafana/$(BINARY)
 PLATFORMS ?= linux/arm64,linux/amd64
 
@@ -14,16 +16,16 @@ all: build ## Build the project (default target)
 
 build: $(BUILD_DIR)/$(BINARY) ## Compile the binary into the build directory
 
-$(BUILD_DIR)/$(BINARY): $(shell find . -name '*.go') go.mod go.sum
+$(BUILD_DIR)/$(BINARY): $(shell find . -name '*.go') go.mod go.sum VERSION
 	@mkdir -p $(BUILD_DIR)
-	go build -o $@ .
+	go build -ldflags "$(LDFLAGS)" -o $@ .
 
 build-image: $(BUILD_DIR)/image-built-$(VERSION)
-$(BUILD_DIR)/image-built-$(VERSION): operations/container/Dockerfile $(shell find . -name '*.go') go.mod go.sum
-	docker buildx build --platform $(PLATFORMS) --tag $(IMAGE):$(VERSION) --file operations/container/Dockerfile .
-	mkdir -p $(BUILD_DIR) && touch $(BUILD_DIR)/image-built-${VERSION}
+$(BUILD_DIR)/image-built-$(VERSION): operations/container/Dockerfile $(shell find . -name '*.go') go.mod go.sum VERSION
+	docker buildx build --platform $(PLATFORMS) --build-arg VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --tag $(IMAGE):$(VERSION) --file operations/container/Dockerfile .
+	mkdir -p $(BUILD_DIR) && touch $(BUILD_DIR)/image-built-$(VERSION)
 
-push-image: build/image-built-$(VERSION)
+push-image: $(BUILD_DIR)/image-built-$(VERSION)
 	docker push $(IMAGE):$(VERSION)
 
 clean: ## Remove build artifacts
