@@ -41,6 +41,7 @@ objects:
     kind: Deployment
     namespaces:
       - default
+    namePattern: "alloy-.*"
   - apiVersion: v1
     kind: Service
     namespaces:

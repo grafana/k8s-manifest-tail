@@ -20,7 +20,11 @@ func (rule *ObjectRule) Describe(c *Config) string {
 	if len(includedNamespaces) == 0 {
 		includedNamespaces = c.Namespaces
 	}
-	return fmt.Sprintf("%s in %s", pluralKind, describeNamespaceScope(includedNamespaces, c.ExcludeNamespaces))
+	description := fmt.Sprintf("%s in %s", pluralKind, describeNamespaceScope(includedNamespaces, c.ExcludeNamespaces))
+	if strings.TrimSpace(rule.NamePattern) != "" {
+		description = fmt.Sprintf("%s with names matching %q", description, rule.NamePattern)
+	}
+	return description
 }
 
 func pluralizeKind(kind string) string {

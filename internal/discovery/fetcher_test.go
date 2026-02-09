@@ -159,6 +159,35 @@ func TestFetcherHandlesClusterScopedResources(t *testing.T) {
 	g.Expect(objectNames(items)).To(gomega.Equal([]string{"node-a"}))
 }
 
+func TestFetcherAppliesNamePattern(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctx := context.Background()
+	cfg := &config.Config{}
+	alloyLogs := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "alloy-logs", Namespace: "default"}}
+	alloyMetrics := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "alloy-metrics", Namespace: "default"}}
+	nodeExporter := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "nodeexporter", Namespace: "default"}}
+	clients := newTestClients(
+		[]runtime.Object{alloyLogs, alloyMetrics, nodeExporter},
+		[]resourceMapping{
+			{
+				GVR:   corev1.SchemeGroupVersion.WithResource("pods"),
+				GVK:   corev1.SchemeGroupVersion.WithKind("Pod"),
+				Scope: meta.RESTScopeNamespace,
+			},
+		},
+	)
+
+	fetcher := NewFetcher(clients, cfg)
+	items, err := fetcher.FetchResources(ctx, config.ObjectRule{
+		APIVersion:  "v1",
+		Kind:        "Pod",
+		NamePattern: "alloy-.*",
+	})
+
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Expect(objectNames(items)).To(gomega.Equal([]string{"alloy-logs", "alloy-metrics"}))
+}
+
 func objectNames(items []unstructured.Unstructured) []string {
 	var names []string
 	for _, item := range items {

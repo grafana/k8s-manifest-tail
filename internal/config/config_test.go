@@ -65,6 +65,18 @@ func TestObjectRuleValidateDuplicateNamespaces(t *testing.T) {
 	g.Expect(err.Error()).To(gomega.ContainSubstring("duplicate namespace"))
 }
 
+func TestObjectRuleValidateNamePattern(t *testing.T) {
+	t.Parallel()
+
+	g := gomega.NewWithT(t)
+
+	rule := ObjectRule{NamePattern: "["}
+	err := rule.Validate()
+
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(err.Error()).To(gomega.ContainSubstring("invalid namePattern"))
+}
+
 func TestConfigValidateInvokesRuleValidation(t *testing.T) {
 	t.Parallel()
 

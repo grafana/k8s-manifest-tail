@@ -46,10 +46,12 @@ objects:
   - apiVersion: apps/v1
     kind: Deployment
     namespaces: [default]  # This list of namespaces takes precedent over the global namespace list.
+    namePattern: "alloy-.*" # Optional regular expression to match object names.
 ```
 
-This config file will get manifests for all Pods, and Deployments within the `default` namespace. It will store them as
-YAML files inside the directory named `output`.
+This config file will get manifests for all Pods, and Deployments within the `default` namespace whose names match the
+regular expression `alloy-.*` (for example `alloy-logs` or `alloy-metrics`). It will store them as YAML files inside the
+directory named `output`.
 
 ### Configuration Flags
 

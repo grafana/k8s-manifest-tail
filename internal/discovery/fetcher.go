@@ -3,6 +3,9 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -48,7 +51,11 @@ func (f *Fetcher) fetchClusterScoped(ctx context.Context, client dynamic.Namespa
 	if err != nil {
 		return nil, fmt.Errorf("list %s (cluster-scoped): %w", rule.Kind, err)
 	}
-	return list.Items, nil
+	filtered, err := filterByNamePattern(list.Items, rule.NamePattern)
+	if err != nil {
+		return nil, fmt.Errorf("filter %s by name: %w", rule.Kind, err)
+	}
+	return filtered, nil
 }
 
 // fetchNamespaced returns all namespaced objects that match a single rule.
@@ -63,7 +70,8 @@ func (f *Fetcher) fetchNamespaced(ctx context.Context, client dynamic.Namespacea
 		if err != nil {
 			return nil, fmt.Errorf("list %s across namespaces: %w", rule.Kind, err)
 		}
-		return filterExcluded(list.Items, f.cfg.ExcludeNamespaces), nil
+		filtered := filterExcluded(list.Items, f.cfg.ExcludeNamespaces)
+		return applyNameFilter(filtered, rule, rule.Kind)
 	}
 
 	var all []unstructured.Unstructured
@@ -74,7 +82,7 @@ func (f *Fetcher) fetchNamespaced(ctx context.Context, client dynamic.Namespacea
 		}
 		all = append(all, list.Items...)
 	}
-	return all, nil
+	return applyNameFilter(all, rule, rule.Kind)
 }
 
 func MappingFromRule(mapper meta.RESTMapper, rule config.ObjectRule) (*meta.RESTMapping, error) {
@@ -113,4 +121,30 @@ func filterExcluded(items []unstructured.Unstructured, excludedNamespaces []stri
 		}
 	}
 	return filtered
+}
+
+func applyNameFilter(items []unstructured.Unstructured, rule config.ObjectRule, kind string) ([]unstructured.Unstructured, error) {
+	filtered, err := filterByNamePattern(items, rule.NamePattern)
+	if err != nil {
+		return nil, fmt.Errorf("filter %s by name: %w", kind, err)
+	}
+	return filtered, nil
+}
+
+func filterByNamePattern(items []unstructured.Unstructured, pattern string) ([]unstructured.Unstructured, error) {
+	pattern = strings.TrimSpace(pattern)
+	if pattern == "" {
+		return items, nil
+	}
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("compile name pattern: %w", err)
+	}
+	var filtered []unstructured.Unstructured
+	for _, item := range items {
+		if re.MatchString(item.GetName()) {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered, nil
 }

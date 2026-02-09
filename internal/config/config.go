@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,9 +27,10 @@ type OutputConfig struct {
 
 // ObjectRule describes which Kubernetes objects to collect.
 type ObjectRule struct {
-	APIVersion string   `mapstructure:"apiVersion" yaml:"apiVersion"`
-	Kind       string   `mapstructure:"kind" yaml:"kind"`
-	Namespaces []string `mapstructure:"namespaces" yaml:"namespaces"`
+	APIVersion  string   `mapstructure:"apiVersion" yaml:"apiVersion"`
+	Kind        string   `mapstructure:"kind" yaml:"kind"`
+	Namespaces  []string `mapstructure:"namespaces" yaml:"namespaces"`
+	NamePattern string   `mapstructure:"namePattern" yaml:"namePattern"`
 }
 
 // Config captures all supported configuration settings.
@@ -219,7 +221,15 @@ func (c OTLPConfig) Validate() error {
 
 // Validate ensures an object rule is internally consistent.
 func (rule *ObjectRule) Validate() error {
-	return checkForDuplicates(rule.Namespaces)
+	if err := checkForDuplicates(rule.Namespaces); err != nil {
+		return err
+	}
+	if strings.TrimSpace(rule.NamePattern) != "" {
+		if _, err := regexp.Compile(rule.NamePattern); err != nil {
+			return fmt.Errorf("invalid namePattern %q: %w", rule.NamePattern, err)
+		}
+	}
+	return nil
 }
 
 func checkForDuplicates(namespaces []string) error {

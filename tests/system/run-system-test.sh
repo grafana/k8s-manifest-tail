@@ -60,12 +60,53 @@ list_test() {
 
     if [[ -f "${expectedList}" ]]; then
       echo "  - Validating list output"
-      diff -u "${expectedList}" "${tmpList}"
+      if ! diff -u "${expectedList}" "${tmpList}"; then
+        echo "ERROR: list output mismatch for ${testName}" >&2
+        exit 1
+      fi
     else
+      echo "  - No expected list output found; creating baseline"
       cp "${tmpList}" "${expectedList}"
     fi
 
-    echo "<== Test ${testName} passed"
+    echo "<== List test ${testName} passed"
+  )
+}
+
+describe_test() {
+  local testDir="$1"
+  testName=$(basename "${testDir}")
+  echo "==> Starting describe test ${testName}"
+  (
+    set -euo pipefail
+    local config="${testDir}/config.yaml"
+    local expectedDescribe="${testDir}/expected-describe-output.txt"
+
+    tmpDescribe="$(mktemp)"
+    cleanup() {
+      if [[ -n "${tmpDescribe}" && -f "${tmpDescribe}" ]]; then
+        rm -f "${tmpDescribe}"
+      fi
+    }
+    trap cleanup EXIT
+
+    (
+      cd "${testDir}"
+      "${BINARY}" describe --config "${config}" > "${tmpDescribe}"
+    )
+
+    if [[ -f "${expectedDescribe}" ]]; then
+      echo "  - Validating describe output"
+      if ! diff -u "${expectedDescribe}" "${tmpDescribe}"; then
+        echo "ERROR: describe output mismatch for ${testName}" >&2
+        exit 1
+      fi
+    else
+      echo "  - No expected describe output found; creating baseline"
+      cp "${tmpDescribe}" "${expectedDescribe}"
+    fi
+
+    echo "<== Describe test ${testName} passed"
   )
 }
 
@@ -93,12 +134,16 @@ run_once_test() {
 
     if [[ -d "${expectedOutput}" ]]; then
       echo "  - Validating run output"
-      diff -ru "${expectedOutput}" "${tmpOutput}"
+      if ! diff -ru "${expectedOutput}" "${tmpOutput}"; then
+        echo "ERROR: run output mismatch for ${testName}" >&2
+        exit 1
+      fi
     else
+      echo "  - No expected run output found; creating baseline"
       cp -rf "${tmpOutput}" "${expectedOutput}"
     fi
 
-    echo "<== Test ${testName} passed"
+    echo "<== Run test ${testName} passed"
   )
 }
 
@@ -107,18 +152,34 @@ if [[ "${CREATE_CLUSTER}" == "true" ]]; then
 fi
 
 overall_rc=0
+failed_tests=()
 while IFS= read -r -d '' configFile; do
   testDir="$(dirname "${configFile}")"
+  if ! describe_test "${testDir}"; then
+    failed_tests+=("describe:${testDir}")
+    overall_rc=1
+  fi
   if ! list_test "${testDir}"; then
+    failed_tests+=("list:${testDir}")
     overall_rc=1
   fi
   if ! run_once_test "${testDir}"; then
+    failed_tests+=("run:${testDir}")
     overall_rc=1
   fi
 done < <(find "${SCRIPT_DIR}" -name config.yaml -print0)
 
 if [[ "${DELETE_CLUSTER}" == "true" ]]; then
   delete_cluster
+fi
+
+if [[ ${#failed_tests[@]} -gt 0 ]]; then
+  echo
+  echo "The following system test checks failed:"
+  for entry in "${failed_tests[@]}"; do
+    IFS=":" read -r testType testPath <<< "${entry}"
+    echo "  - ${testType} (${testPath})"
+  done
 fi
 
 exit "${overall_rc}"

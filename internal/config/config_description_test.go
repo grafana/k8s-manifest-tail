@@ -94,3 +94,17 @@ func TestDescribe_IncludedNamespacesWithExclusions(t *testing.T) {
 	g.Expect(description).To(gomega.ContainSubstring("This configuration will get manifests for:"))
 	g.Expect(description).To(gomega.ContainSubstring(`  Deployments in the "default" or "prod" namespaces (excluding "kube-system")`))
 }
+
+func TestDescribe_IncludesNamePattern(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+
+	cfg := &Config{
+		Objects: []ObjectRule{
+			{APIVersion: "v1", Kind: "Service", NamePattern: "alloy-.*"},
+		},
+	}
+
+	description := cfg.Describe()
+	g.Expect(description).To(gomega.ContainSubstring(`Services in all namespaces with names matching "alloy-.*"`))
+}
