@@ -13,7 +13,9 @@ if [[ ! -x "${BINARY}" ]]; then
   exit 1
 fi
 
-export KUBECONFIG="${SCRIPT_DIR}/kubeconfig.yaml"
+export CREATE_CLUSTER=${CREATE_CLUSTER:=true}
+export DELETE_CLUSTER=${DELETE_CLUSTER:=false}
+
 clusterName=k8s-manifest-tail-test-cluster
 
 delete_cluster() {
@@ -36,8 +38,8 @@ create_cluster() {
 
 list_test() {
   local testDir="$1"
-  testName=$(basename testDir)
-  echo "==> Starting test ${testName}"
+  testName=$(basename "${testDir}")
+  echo "==> Starting list test ${testName}"
   (
     set -euo pipefail
     local config="${testDir}/config.yaml"
@@ -69,8 +71,8 @@ list_test() {
 
 run_once_test() {
   local testDir="$1"
-  testName=$(basename testDir)
-  echo "==> Starting test ${testName}"
+  testName=$(basename "${testDir}")
+  echo "==> Starting run test ${testName}"
   (
     set -euo pipefail
     local config="${testDir}/config.yaml"
@@ -100,7 +102,9 @@ run_once_test() {
   )
 }
 
-create_cluster
+if [[ "${CREATE_CLUSTER}" == "true" ]]; then
+  create_cluster
+fi
 
 overall_rc=0
 while IFS= read -r -d '' configFile; do
@@ -113,6 +117,8 @@ while IFS= read -r -d '' configFile; do
   fi
 done < <(find "${SCRIPT_DIR}" -name config.yaml -print0)
 
-#delete_cluster
+if [[ "${DELETE_CLUSTER}" == "true" ]]; then
+  delete_cluster
+fi
 
 exit "${overall_rc}"
