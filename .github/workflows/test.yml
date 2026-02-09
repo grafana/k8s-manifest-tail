@@ -65,13 +65,11 @@ jobs:
       - name: Build binary
         run: make build
 
-      - name: Install Kind CLI
+      - name: Create Kind cluster
         uses: helm/kind-action@92086f6be054225fa813e0a4b13787fc9088faab  # v1.13.0
-        with:
-          install_only: true
 
       - name: Run system tests
-        working-directory: source/tests/system
+        working-directory: tests/system
         run: ./run-system-test.sh
         env:
           CREATE_CLUSTER: false

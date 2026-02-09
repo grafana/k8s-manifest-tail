@@ -109,6 +109,28 @@ func TestTailConsumeWatchHandlesEvents(t *testing.T) {
 	g.Expect(stubLogger.logged).To(gomega.Equal(2))
 }
 
+func TestTailRecordDiffMetrics(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+
+	ctx := context.Background()
+	metrics := &stubMetrics{}
+	tail := Tail{Metrics: metrics}
+
+	addObj := &unstructured.Unstructured{}
+	changeObjPrev := &unstructured.Unstructured{}
+	changeObjCurr := &unstructured.Unstructured{}
+
+	tail.recordDiffMetrics(ctx, &manifest.Diff{Current: addObj})
+	tail.recordDiffMetrics(ctx, &manifest.Diff{Previous: changeObjPrev, Current: changeObjCurr})
+	tail.recordDiffMetrics(ctx, &manifest.Diff{Previous: addObj})
+	tail.recordDiffMetrics(ctx, nil) // ignored
+
+	g.Expect(metrics.added).To(gomega.Equal(1))
+	g.Expect(metrics.changed).To(gomega.Equal(1))
+	g.Expect(metrics.removed).To(gomega.Equal(1))
+}
+
 type stubProcessor struct {
 	processed []string
 	deleted   []string
@@ -130,6 +152,29 @@ type stubDiffLogger struct {
 
 func (s *stubDiffLogger) Log(_ *manifest.Diff) {
 	s.logged++
+}
+
+type stubMetrics struct {
+	fullRuns []int
+	added    int
+	changed  int
+	removed  int
+}
+
+func (s *stubMetrics) RecordFullRun(_ context.Context, count int) {
+	s.fullRuns = append(s.fullRuns, count)
+}
+
+func (s *stubMetrics) RecordManifestAdded(context.Context) {
+	s.added++
+}
+
+func (s *stubMetrics) RecordManifestChanged(context.Context) {
+	s.changed++
+}
+
+func (s *stubMetrics) RecordManifestRemoved(context.Context) {
+	s.removed++
 }
 
 type resourceMapping struct {

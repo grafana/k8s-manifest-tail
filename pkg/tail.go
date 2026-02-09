@@ -24,7 +24,7 @@ type Tail struct {
 	Config     *config.Config
 	DiffLogger logging.DiffLogger
 	Processor  manifest.Processor
-	Metrics    *telemetry.Metrics
+	Metrics    telemetry.MetricsRecorder
 }
 
 func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
@@ -43,6 +43,7 @@ func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
 				return total, fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 			}
 			t.DiffLogger.Log(diff)
+			t.recordDiffMetrics(ctx, diff)
 		}
 	}
 	if t.Metrics != nil {
@@ -188,12 +189,15 @@ func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule c
 					return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 				}
 				t.DiffLogger.Log(diff)
+				t.recordDiffMetrics(ctx, diff)
 			case watch.Deleted:
 				if err := t.Processor.Delete(rule, obj, t.Config); err != nil {
 					watcher.Stop()
 					return fmt.Errorf("delete %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 				}
-				t.DiffLogger.Log(&manifest.Diff{Previous: obj})
+				diff := &manifest.Diff{Previous: obj}
+				t.DiffLogger.Log(diff)
+				t.recordDiffMetrics(ctx, diff)
 			case watch.Error:
 				watcher.Stop()
 				if statusErr := apierrors.FromObject(event.Object); statusErr != nil {
@@ -202,5 +206,19 @@ func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule c
 				return fmt.Errorf("watch error for %s", rule.Kind)
 			}
 		}
+	}
+}
+
+func (t *Tail) recordDiffMetrics(ctx context.Context, diff *manifest.Diff) {
+	if t.Metrics == nil || diff == nil {
+		return
+	}
+	switch {
+	case diff.Previous == nil && diff.Current != nil:
+		t.Metrics.RecordManifestAdded(ctx)
+	case diff.Previous != nil && diff.Current == nil:
+		t.Metrics.RecordManifestRemoved(ctx)
+	case diff.Previous != nil && diff.Current != nil:
+		t.Metrics.RecordManifestChanged(ctx)
 	}
 }
