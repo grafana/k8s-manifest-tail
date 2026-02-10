@@ -13,12 +13,10 @@ logging:
   # or `detailed` (print the diff itself). Can use the environment variable: K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS
   logDiffs: false
   otlp:
-    # Enable exporting log records via OTLP in addition to stdout logging.
-    enabled: false
-    # Override the OTLP endpoint (host:port). Leave empty to use the OTLP environment defaults.
+    # Set the OTLP endpoint (host:port). Setting standard OTEL_EXPORTER_OTLP_* env vars
+    # (for example OTEL_EXPORTER_OTLP_LOGS_ENDPOINT) automatically enables OTLP logging.
+    # The exporter itself reads those env vars, so only set this field when you need to override them.
     endpoint: ""
-    # Whether to use an insecure (non-TLS) OTLP connection.
-    insecure: false
 
 # When to fetch another full set of all objects
 # Can use the environment variable: K8S_MANIFEST_TAIL_REFRESH_INTERVAL

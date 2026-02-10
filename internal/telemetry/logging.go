@@ -41,7 +41,7 @@ func SetupLogging(ctx context.Context, cfg config.LoggingConfig) (log.Logger, fu
 	var processors []sdklog.Processor
 	processors = append(processors, sdklog.NewSimpleProcessor(consoleExporter))
 
-	if cfg.OTLP.ShouldEnable() {
+	if cfg.OTLP.Enabled() {
 		exporter, err := otlploggrpc.New(ctx, opts...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("create otlp log exporter: %w", err)

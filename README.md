@@ -53,6 +53,13 @@ This config file will get manifests for all Pods, and Deployments within the `de
 regular expression `alloy-.*` (for example `alloy-logs` or `alloy-metrics`). It will store them as YAML files inside the
 directory named `output`.
 
+### OTLP logging
+
+Set the `logging.otlp` block in `config.yaml` (or the CLI/env overrides) to emit OpenTelemetry logs. Any of the
+standard `OTEL_EXPORTER_OTLP_*` or `OTEL_EXPORTER_OTLP_LOGS_*` environment variables (for example
+`OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`) automatically enable the OTLP exporter and are passed straight through to the
+underlying OpenTelemetry Go exporter.
+
 ### Configuration Flags
 
 The following configuration flags may be passed via the command-line:

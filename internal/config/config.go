@@ -204,14 +204,36 @@ func (m *LogDiffMode) UnmarshalYAML(value *yaml.Node) error {
 
 // OTLPConfig controls OTLP logging export.
 type OTLPConfig struct {
-	Enabled  bool   `mapstructure:"enabled" yaml:"enabled"`
 	Endpoint string `mapstructure:"endpoint" yaml:"endpoint"`
 	Insecure bool   `mapstructure:"insecure" yaml:"insecure"`
 }
 
-// ShouldEnable returns true when OTLP logging should be initialized.
-func (c OTLPConfig) ShouldEnable() bool {
-	return c.Enabled || c.Endpoint != ""
+//var otlpEnvVars = []string{
+//	"OTEL_EXPORTER_OTLP_ENDPOINT",
+//	"OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
+//	"OTEL_EXPORTER_OTLP_PROTOCOL",
+//	"OTEL_EXPORTER_OTLP_LOGS_PROTOCOL",
+//	"OTEL_EXPORTER_OTLP_HEADERS",
+//	"OTEL_EXPORTER_OTLP_LOGS_HEADERS",
+//	"OTEL_EXPORTER_OTLP_COMPRESSION",
+//	"OTEL_EXPORTER_OTLP_LOGS_COMPRESSION",
+//	"OTEL_EXPORTER_OTLP_TIMEOUT",
+//	"OTEL_EXPORTER_OTLP_LOGS_TIMEOUT",
+//	"OTEL_EXPORTER_OTLP_CERTIFICATE",
+//	"OTEL_EXPORTER_OTLP_LOGS_CERTIFICATE",
+//	"OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE",
+//	"OTEL_EXPORTER_OTLP_LOGS_CLIENT_CERTIFICATE",
+//	"OTEL_EXPORTER_OTLP_CLIENT_KEY",
+//	"OTEL_EXPORTER_OTLP_LOGS_CLIENT_KEY",
+//	"OTEL_EXPORTER_OTLP_INSECURE",
+//	"OTEL_EXPORTER_OTLP_LOGS_INSECURE",
+//}
+
+// Enabled returns true when OTLP logging should be initialized.
+func (c OTLPConfig) Enabled() bool {
+	return c.Endpoint != "" ||
+		os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "" ||
+		os.Getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") != ""
 }
 
 // Validate ensures OTLP config is coherent.

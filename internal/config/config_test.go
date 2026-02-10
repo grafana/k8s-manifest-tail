@@ -173,3 +173,27 @@ func TestLoggingConfigInvalidMode(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring("validate logging config"))
 }
+
+func TestOTLPConfigEnabled(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		var cfg OTLPConfig
+		if cfg.Enabled() {
+			t.Fatalf("expected disabled config to remain disabled")
+		}
+	})
+
+	t.Run("endpoint flag", func(t *testing.T) {
+		cfg := OTLPConfig{Endpoint: "tempo:4317"}
+		if !cfg.Enabled() {
+			t.Fatalf("expected explicit endpoint to enable otlp logging")
+		}
+	})
+
+	t.Run("env endpoint", func(t *testing.T) {
+		t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "tempo:4317")
+		var cfg OTLPConfig
+		if !cfg.Enabled() {
+			t.Fatalf("expected logs endpoint env to enable otlp logging")
+		}
+	})
+}
