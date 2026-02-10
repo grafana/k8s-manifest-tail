@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -15,7 +16,7 @@ metadata:
   name: k8s-manifest-tail
 rules:
   - apiGroups: [""]
-    resources: ["pods", "services", "configmaps", "namespaces"]
+    resources: ["pods", "services"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
@@ -56,23 +57,34 @@ spec:
       containers:
         - name: k8s-manifest-tail
           image: ghcr.io/example/k8s-manifest-tail:latest
-          args:
-            - run
+          args: [run, --config, /etc/k8s-manifest-tail/config.yaml]
           env:
-            - name: CONFIG_PATH
-              value: /etc/k8s-manifest-tail/config.yaml
+            - name: K8S_MANIFEST_TAIL_REFRESH_INTERVAL
+              value: 24h
+            - name: K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS
+              value: detailed
+            - name: K8S_MANIFEST_TAIL_OUTPUT_DIRECTORY
+              value: /var/manifests
+            - name: K8S_MANIFEST_TAIL_OUTPUT_FORMAT
+              value: json
+
+            - name: K8S_MANIFEST_TAIL_NAMESPACES
+              value: default
+            - name: K8S_MANIFEST_TAIL_EXCLUDE_NAMESPACES
+              value: kube-system
           volumeMounts:
             - name: config
               mountPath: /etc/k8s-manifest-tail
+              readOnly: true
       volumes:
         - name: config
           configMap:
-            name: k8s-manifest-tail-config
+            name: k8s-manifest-tail
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: k8s-manifest-tail-config
+  name: k8s-manifest-tail
   namespace: k8s-manifest-tail
 data:
   config.yaml: |
@@ -82,3 +94,11 @@ data:
     objects:
       - apiVersion: v1
         kind: Pod
+      - apiVersion: v1
+        kind: Service
+      - apiVersion: apps/v1
+        kind: Deployment
+      - apiVersion: apps/v1
+        kind: Statefulset
+      - apiVersion: apps/v1
+        kind: Daemonet
