@@ -16,14 +16,3 @@ type Processor interface {
 	Process(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) (*Diff, error)
 	Delete(rule config.ObjectRule, obj *unstructured.Unstructured, cfg *config.Config) error
 }
-
-// NewProcessor returns the default manifest processor.
-func NewProcessor(cfg *config.Config) Processor {
-	writer := NewWriter(cfg.Output)
-	return NewFilterProcessor(
-		writer,
-		RemoveStatusFilter{},
-		RemoveMetadataFieldsFilter{},
-		RedactEnvValuesFilter{},
-	)
-}

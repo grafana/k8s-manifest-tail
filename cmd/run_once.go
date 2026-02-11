@@ -48,7 +48,7 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 		Clients:    clients,
 		Config:     Configuration,
 		DiffLogger: diffLogger,
-		Processor:  GetManifestProcessor(),
+		Processor:  GetManifestProcessor(Configuration, logger),
 		Metrics:    metrics,
 	}
 

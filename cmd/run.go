@@ -47,8 +47,8 @@ func runRun(cmd *cobra.Command, args []string) error {
 		Clients:    clients,
 		Config:     Configuration,
 		DiffLogger: diffLogger,
-		Processor:  GetManifestProcessor(),
 		Metrics:    metrics,
+		Processor:  GetManifestProcessor(Configuration, logger),
 	}
 	total, err := tail.RunFullManifestCheck(ctx)
 	if err != nil {

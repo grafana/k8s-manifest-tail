@@ -200,10 +200,7 @@ func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule c
 				t.recordDiffMetrics(ctx, diff)
 			case watch.Error:
 				watcher.Stop()
-				if statusErr := apierrors.FromObject(event.Object); statusErr != nil {
-					return fmt.Errorf("watch error for %s: %v", rule.Kind, statusErr)
-				}
-				return fmt.Errorf("watch error for %s", rule.Kind)
+				return fmt.Errorf("watch error for %s: %v", rule.Kind, apierrors.FromObject(event.Object))
 			}
 		}
 	}

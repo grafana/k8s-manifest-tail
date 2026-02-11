@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,6 +66,7 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("decode config: %w", err)
 	}
 
+	ApplyEnvOverrides(&cfg)
 	return &cfg, nil
 }
 
@@ -81,6 +83,11 @@ func ApplyEnvOverrides(cfg *Config) {
 	}
 	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS")); value != "" {
 		cfg.Logging.LogDiffs = LogDiffMode(strings.ToLower(value))
+	}
+	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_LOGGING_LOG_MANIFESTS")); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			cfg.Logging.LogManifests = boolValue
+		}
 	}
 	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_REFRESH_INTERVAL")); value != "" {
 		cfg.RefreshInterval = value
@@ -132,8 +139,9 @@ func (cfg *Config) GetRefreshInterval() (time.Duration, error) {
 
 // LoggingConfig controls optional logging behavior.
 type LoggingConfig struct {
-	LogDiffs LogDiffMode `mapstructure:"logDiffs" yaml:"logDiffs"`
-	OTLP     OTLPConfig  `mapstructure:"otlp" yaml:"otlp"`
+	LogDiffs     LogDiffMode `mapstructure:"logDiffs" yaml:"logDiffs"`
+	LogManifests bool        `mapstructure:"logManifests" yaml:"logManifests"`
+	OTLP         OTLPConfig  `mapstructure:"otlp" yaml:"otlp"`
 }
 
 // Mode returns the normalized diff logging mode.

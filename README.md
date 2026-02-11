@@ -58,7 +58,9 @@ directory named `output`.
 Set the `logging.otlp` block in `config.yaml` (or the CLI/env overrides) to emit OpenTelemetry logs. Any of the
 standard `OTEL_EXPORTER_OTLP_*` or `OTEL_EXPORTER_OTLP_LOGS_*` environment variables (for example
 `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`) automatically enable the OTLP exporter and are passed straight through to the
-underlying OpenTelemetry Go exporter.
+underlying OpenTelemetry Go exporter. Toggle `logging.logManifests` (or the env var
+`K8S_MANIFEST_TAIL_LOGGING_LOG_MANIFESTS=true`) to include the manifest payloads themselves in the emitted log
+records, which pairs well with diff logging or OTLP shipping.
 
 ### Configuration Flags
 

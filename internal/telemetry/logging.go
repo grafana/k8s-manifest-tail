@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/internal"
 	"os"
 
 	"github.com/grafana/k8s-manifest-tail/internal/config"
@@ -32,6 +33,7 @@ func SetupLogging(ctx context.Context, cfg config.LoggingConfig) (log.Logger, fu
 		resource.Default(),
 		resource.NewSchemaless(
 			semconv.ServiceNameKey.String("k8s-manifest-tail"),
+			semconv.ServiceVersionKey.String(internal.Version),
 		),
 	)
 	if err != nil {

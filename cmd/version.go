@@ -2,30 +2,29 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/grafana/k8s-manifest-tail/internal"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	version    = "dev"
-	gitCommit  = ""
 	versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Print the CLI version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			out := version
-			if gitCommit != "" {
-				commit := gitCommit
+			out := internal.Version
+			if internal.GitCommit != "" {
+				commit := internal.GitCommit
 				if len(commit) > 7 {
 					commit = commit[:7]
 				}
-				out = fmt.Sprintf("%s (%s)", version, commit)
+				out = fmt.Sprintf("%s (%s)", internal.Version, commit)
 			}
 			if strings.TrimSpace(out) == "" {
 				out = "dev"
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), out)
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), out)
 			return nil
 		},
 	}

@@ -12,6 +12,12 @@ logging:
   # Whether to log manifest diffs. Options are `false` (disable diff logging), `compact` (mention objects that changed),
   # or `detailed` (print the diff itself). Can use the environment variable: K8S_MANIFEST_TAIL_LOGGING_LOG_DIFFS
   logDiffs: false
+
+  # Whether to log the manifests themselves. Options are `false` (disable manifest logging), `true` (enable manifest
+  # logging). This is often paired with the OTLP exporter to save manifests and diffs to the log storage.  Can use the
+  # environment variable: K8S_MANIFEST_TAIL_LOGGING_LOG_MANIFESTS
+  logManifests: false
+
   otlp:
     # Set the OTLP endpoint (host:port). Setting standard OTEL_EXPORTER_OTLP_* env vars
     # (for example OTEL_EXPORTER_OTLP_LOGS_ENDPOINT) automatically enables OTLP logging.
