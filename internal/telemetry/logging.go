@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/grafana/k8s-manifest-tail/internal"
-	"os"
-
 	"github.com/grafana/k8s-manifest-tail/internal/config"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/log"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"os"
 )
 
 // SetupLogging configures an OTLP log exporter if enabled. It returns the logger, a shutdown func, and any error.
@@ -21,14 +21,6 @@ func SetupLogging(ctx context.Context, cfg config.LoggingConfig) (log.Logger, fu
 	if err != nil {
 		return nil, nil, fmt.Errorf("create console log exporter: %w", err)
 	}
-	opts := []otlploggrpc.Option{}
-	if cfg.OTLP.Endpoint != "" {
-		opts = append(opts, otlploggrpc.WithEndpoint(cfg.OTLP.Endpoint))
-	}
-	if cfg.OTLP.Insecure {
-		opts = append(opts, otlploggrpc.WithInsecure())
-	}
-
 	res, err := resource.Merge(
 		resource.Default(),
 		resource.NewSchemaless(
@@ -44,7 +36,7 @@ func SetupLogging(ctx context.Context, cfg config.LoggingConfig) (log.Logger, fu
 	processors = append(processors, sdklog.NewSimpleProcessor(consoleExporter))
 
 	if cfg.OTLP.Enabled() {
-		exporter, err := otlploggrpc.New(ctx, opts...)
+		exporter, err := newOTLPExporter(ctx, cfg.OTLP)
 		if err != nil {
 			return nil, nil, fmt.Errorf("create otlp log exporter: %w", err)
 		}
@@ -70,4 +62,40 @@ func Info(logger log.Logger, msg string, attributes ...log.KeyValue) {
 	record.SetBody(log.StringValue(msg))
 	record.AddAttributes(attributes...)
 	logger.Emit(context.Background(), record)
+}
+
+const (
+	OTLPProtocolGRPC         string = "grpc"
+	OTLPProtocolHTTPJSON     string = "http/json"
+	OTLPProtocolHTTPProtobuf string = "http/protobuf"
+)
+
+func newOTLPExporter(ctx context.Context, cfg config.OTLPConfig) (sdklog.Exporter, error) {
+	protocol := OTLPProtocolGRPC
+	if os.Getenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL") != "" {
+		protocol = os.Getenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL")
+	} else if os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL") != "" {
+		protocol = os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
+	}
+
+	if protocol == OTLPProtocolGRPC {
+		opts := []otlploggrpc.Option{}
+		if cfg.Endpoint != "" {
+			opts = append(opts, otlploggrpc.WithEndpoint(cfg.Endpoint))
+		}
+		if cfg.Insecure {
+			opts = append(opts, otlploggrpc.WithInsecure())
+		}
+		return otlploggrpc.New(ctx, opts...)
+	} else if protocol == OTLPProtocolHTTPJSON || protocol == OTLPProtocolHTTPProtobuf {
+		opts := []otlploghttp.Option{}
+		if cfg.Endpoint != "" {
+			opts = append(opts, otlploghttp.WithEndpoint(cfg.Endpoint))
+		}
+		if cfg.Insecure {
+			opts = append(opts, otlploghttp.WithInsecure())
+		}
+		return otlploghttp.New(ctx, opts...)
+	}
+	return nil, fmt.Errorf("unknown OTLP protocol: %s", protocol)
 }

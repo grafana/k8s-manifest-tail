@@ -56,6 +56,6 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Fetched %d manifest(s)\n", total)
+	telemetry.Info(logger, fmt.Sprintf("Fetched %d manifest(s)", total))
 	return nil
 }
