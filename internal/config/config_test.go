@@ -34,7 +34,7 @@ objects:
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(cfg.Output.Directory).To(gomega.Equal("out"))
 	g.Expect(cfg.Output.Format).To(gomega.Equal(OutputFormatJSON))
-	g.Expect(cfg.Logging.Mode()).To(gomega.Equal(LogDiffsCompact))
+	g.Expect(cfg.Logging.LogDiffs).To(gomega.Equal(LogDiffsCompact))
 	g.Expect(cfg.Objects).To(gomega.HaveLen(1))
 	g.Expect(cfg.Objects[0].Kind).To(gomega.Equal("Pod"))
 }
@@ -156,7 +156,7 @@ objects:
 
 	cfg, err := Load(path)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
-	g.Expect(cfg.Logging.Mode()).To(gomega.Equal(LogDiffsDisabled))
+	g.Expect(cfg.Logging.LogDiffs).To(gomega.Equal(LogDiffsDisabled))
 }
 
 func TestLoggingConfigInvalidMode(t *testing.T) {

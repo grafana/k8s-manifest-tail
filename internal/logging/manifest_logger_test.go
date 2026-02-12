@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/grafana/k8s-manifest-tail/internal/config"
 	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestLoggerEmitsManifestWithNamespace(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	stubLogger := &capturingLogger{}
-	logger := NewManifestLogger(stubLogger)
+	logger := NewManifestLogger(config.LoggingConfig{LogManifests: true}, stubLogger)
 
 	current := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "v1",
@@ -51,7 +52,7 @@ func TestLoggerOmitsNamespaceForClusterScopedObjects(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	stubLogger := &capturingLogger{}
-	logger := NewManifestLogger(stubLogger)
+	logger := NewManifestLogger(config.LoggingConfig{LogManifests: true}, stubLogger)
 
 	current := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "v1",

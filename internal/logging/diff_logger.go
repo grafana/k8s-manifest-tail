@@ -13,10 +13,20 @@ type DiffLogger interface {
 
 // NewDiffLogger returns the appropriate logger for the configured mode.
 func NewDiffLogger(cfg config.LoggingConfig, logger log.Logger) DiffLogger {
-	if cfg.Mode() == config.LogDiffsCompact {
+	switch cfg.LogDiffs {
+	case config.LogDiffsCompact:
 		return &CompactDiffLogger{logger: logger}
-	} else if cfg.Mode() == config.LogDiffsDetailed {
+	case config.LogDiffsDetailed:
 		return &DetailedDiffLogger{logger: logger}
+	default:
+		return &NullLogger{}
 	}
-	return &NullDiffLogger{}
+}
+
+// NewManifestLogger returns the appropriate logger for the configured mode.
+func NewManifestLogger(cfg config.LoggingConfig, logger log.Logger) DiffLogger {
+	if cfg.LogManifests {
+		return &ManifestLogger{logger: logger}
+	}
+	return &NullLogger{}
 }

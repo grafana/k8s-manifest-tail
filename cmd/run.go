@@ -42,11 +42,7 @@ func runRun(cmd *cobra.Command, args []string) error {
 	}
 	defer func() { _ = shutdownMetrics(context.Background()) }()
 	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
-
-	var manifestLogger *logging.ManifestLogger
-	if Configuration.Logging.LogManifests {
-		manifestLogger = logging.NewManifestLogger(logger)
-	}
+	manifestLogger := logging.NewManifestLogger(Configuration.Logging, logger)
 
 	tail := pkg.Tail{
 		Clients:        clients,

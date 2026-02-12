@@ -148,20 +148,12 @@ type LoggingConfig struct {
 	OTLP         OTLPConfig  `mapstructure:"otlp" yaml:"otlp"`
 }
 
-// Mode returns the normalized diff logging mode.
-func (l LoggingConfig) Mode() LogDiffMode {
-	if l.LogDiffs == "" {
-		return LogDiffsDisabled
-	}
-	return l.LogDiffs
-}
-
 // Validate ensures logging settings are valid.
 func (l LoggingConfig) Validate() error {
-	switch mode := l.Mode(); mode {
-	case LogDiffsDisabled, LogDiffsCompact, LogDiffsDetailed:
+	switch l.LogDiffs {
+	case "", LogDiffsDisabled, LogDiffsCompact, LogDiffsDetailed:
 	default:
-		return fmt.Errorf("unsupported diff logging mode %q", mode)
+		return fmt.Errorf("unsupported diff logging mode %q", l.LogDiffs)
 	}
 	if err := l.OTLP.Validate(); err != nil {
 		return fmt.Errorf("validate otlp logging config: %w", err)

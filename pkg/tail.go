@@ -23,7 +23,7 @@ type Tail struct {
 	Clients        *kube.Clients
 	Config         *config.Config
 	DiffLogger     logging.DiffLogger
-	ManifestLogger *logging.ManifestLogger
+	ManifestLogger logging.DiffLogger
 	Processor      manifest.Processor
 	Metrics        telemetry.MetricsRecorder
 }
@@ -193,6 +193,9 @@ func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule c
 					return fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 				}
 				t.DiffLogger.Log(diff)
+				if t.ManifestLogger != nil {
+					t.ManifestLogger.Log(diff)
+				}
 				t.recordDiffMetrics(ctx, diff)
 			case watch.Deleted:
 				if err := t.Processor.Delete(rule, obj, t.Config); err != nil {

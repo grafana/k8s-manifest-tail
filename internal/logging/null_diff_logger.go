@@ -2,8 +2,8 @@ package logging
 
 import "github.com/grafana/k8s-manifest-tail/internal/manifest"
 
-// NullDiffLogger discards all diff events.
-type NullDiffLogger struct{}
+// NullLogger discards all diff events.
+type NullLogger struct{}
 
 // Log implements DiffLogger.
-func (NullDiffLogger) Log(*manifest.Diff) {}
+func (NullLogger) Log(*manifest.Diff) {}

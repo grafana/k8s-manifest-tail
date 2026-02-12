@@ -14,12 +14,6 @@ type ManifestLogger struct {
 	logger log.Logger
 }
 
-func NewManifestLogger(logger log.Logger) *ManifestLogger {
-	return &ManifestLogger{
-		logger: logger,
-	}
-}
-
 func (l *ManifestLogger) Log(diff *manifest.Diff) {
 	if diff == nil || diff.Current == nil {
 		return
