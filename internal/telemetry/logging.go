@@ -78,7 +78,8 @@ func newOTLPExporter(ctx context.Context, cfg config.OTLPConfig) (sdklog.Exporte
 		protocol = os.Getenv("OTEL_EXPORTER_OTLP_PROTOCOL")
 	}
 
-	if protocol == OTLPProtocolGRPC {
+	switch protocol {
+	case OTLPProtocolGRPC:
 		opts := []otlploggrpc.Option{}
 		if cfg.Endpoint != "" {
 			opts = append(opts, otlploggrpc.WithEndpoint(cfg.Endpoint))
@@ -87,7 +88,7 @@ func newOTLPExporter(ctx context.Context, cfg config.OTLPConfig) (sdklog.Exporte
 			opts = append(opts, otlploggrpc.WithInsecure())
 		}
 		return otlploggrpc.New(ctx, opts...)
-	} else if protocol == OTLPProtocolHTTPJSON || protocol == OTLPProtocolHTTPProtobuf {
+	case OTLPProtocolHTTPJSON, OTLPProtocolHTTPProtobuf:
 		opts := []otlploghttp.Option{}
 		if cfg.Endpoint != "" {
 			opts = append(opts, otlploghttp.WithEndpoint(cfg.Endpoint))
@@ -96,6 +97,7 @@ func newOTLPExporter(ctx context.Context, cfg config.OTLPConfig) (sdklog.Exporte
 			opts = append(opts, otlploghttp.WithInsecure())
 		}
 		return otlploghttp.New(ctx, opts...)
+	default:
+		return nil, fmt.Errorf("unknown OTLP protocol: %s", protocol)
 	}
-	return nil, fmt.Errorf("unknown OTLP protocol: %s", protocol)
 }
