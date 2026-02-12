@@ -38,12 +38,14 @@ func (l *Logger) Process(rule config.ObjectRule, obj *unstructured.Unstructured,
 		telemetry.Info(
 			l.logger,
 			manifestPayload.String(),
+			log.String("action", "manifest"),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(obj.GetKind())), obj.GetName()),
 		)
 	} else {
 		telemetry.Info(
 			l.logger,
 			manifestPayload.String(),
+			log.String("action", "manifest"),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(obj.GetKind())), obj.GetName()),
 			log.String("k8s.namespace.name", obj.GetNamespace()),
 		)

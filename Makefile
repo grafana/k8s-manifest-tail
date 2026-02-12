@@ -6,6 +6,7 @@ VERSION ?= $(shell cat VERSION 2>/dev/null || echo dev)
 GIT_COMMIT ?= $(shell git rev-parse HEAD 2>/dev/null || echo "")
 LDFLAGS := -X github.com/grafana/k8s-manifest-tail/cmd.version=$(VERSION) -X github.com/grafana/k8s-manifest-tail/cmd.gitCommit=$(GIT_COMMIT)
 IMAGE ?= ghcr.io/grafana/$(BINARY)
+IMAGE_TAG := $(IMAGE):$(VERSION)
 PLATFORMS ?= linux/arm64,linux/amd64
 
 .PHONY: all build clean lint lint-go lint-zizmor test help
@@ -22,11 +23,11 @@ $(BUILD_DIR)/$(BINARY): $(shell find . -name '*.go') go.mod go.sum VERSION
 
 build-image: $(BUILD_DIR)/image-built-$(VERSION)
 $(BUILD_DIR)/image-built-$(VERSION): operations/container/Dockerfile $(shell find . -name '*.go') go.mod go.sum VERSION
-	docker buildx build --platform $(PLATFORMS) --build-arg VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --tag $(IMAGE):$(VERSION) --file operations/container/Dockerfile .
+	docker buildx build --platform $(PLATFORMS) --build-arg VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --tag $(IMAGE_TAG) --file operations/container/Dockerfile .
 	mkdir -p $(BUILD_DIR) && touch $(BUILD_DIR)/image-built-$(VERSION)
 
 push-image: $(BUILD_DIR)/image-built-$(VERSION)
-	docker push $(IMAGE):$(VERSION)
+	docker push $(IMAGE_TAG)
 
 clean: ## Remove build artifacts
 	rm -rf $(BUILD_DIR)

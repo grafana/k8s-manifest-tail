@@ -32,12 +32,14 @@ func (l *CompactDiffLogger) Log(diff *manifest.Diff) {
 		telemetry.Info(
 			l.logger,
 			fmt.Sprintf("Object %s: %s %s", action, target.GetKind(), target.GetName()),
+			log.String("action", action),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
 		)
 	} else {
 		telemetry.Info(
 			l.logger,
 			fmt.Sprintf("Object %s: %s %s/%s", action, target.GetKind(), target.GetNamespace(), target.GetName()),
+			log.String("action", action),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
 			log.String("k8s.namespace.name", target.GetNamespace()),
 		)

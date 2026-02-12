@@ -63,12 +63,14 @@ func (l *DetailedDiffLogger) Log(diff *manifest.Diff) {
 		telemetry.Info(
 			l.logger,
 			string(jsonBytes),
+			log.String("action", payload.Action),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
 		)
 	} else {
 		telemetry.Info(
 			l.logger,
 			string(jsonBytes),
+			log.String("action", payload.Action),
 			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
 			log.String("k8s.namespace.name", payload.Namespace),
 		)
