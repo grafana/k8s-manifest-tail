@@ -92,24 +92,24 @@ func (t *Tail) watchRule(ctx context.Context, rule config.ObjectRule) error {
 	}
 
 	resourceClient := t.Clients.Dynamic.Resource(mapping.Resource)
-	exclude := discovery.NewExcludeSet(t.Config.ExcludeNamespaces)
-	namespaces := discovery.EffectiveNamespaces(rule, t.Config)
+	excludedNamespaces := t.Config.ExcludeNamespaces
+	includedNamespaces := discovery.EffectiveNamespaces(rule, t.Config)
 
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		if len(namespaces) == 0 {
-			return t.watchResourceStream(ctx, resourceClient.Namespace(metav1.NamespaceAll), rule, exclude, true)
+		if len(includedNamespaces) == 0 {
+			return t.watchResourceStream(ctx, resourceClient.Namespace(metav1.NamespaceAll), rule, excludedNamespaces)
 		}
-		return t.watchNamespaceSet(ctx, resourceClient, rule, namespaces, exclude)
+		return t.watchNamespaceSet(ctx, resourceClient, rule, includedNamespaces, excludedNamespaces)
 	}
-	return t.watchResourceStream(ctx, resourceClient, rule, nil, false)
+	return t.watchResourceStream(ctx, resourceClient, rule, nil)
 }
 
-func (t *Tail) watchNamespaceSet(ctx context.Context, client dynamic.NamespaceableResourceInterface, rule config.ObjectRule, namespaces []string, exclude map[string]struct{}) error {
-	errCh := make(chan error, len(namespaces))
+func (t *Tail) watchNamespaceSet(ctx context.Context, client dynamic.NamespaceableResourceInterface, rule config.ObjectRule, includedNamepaces, excludedNamespaces []string) error {
+	errCh := make(chan error, len(includedNamepaces))
 	var wg sync.WaitGroup
 	active := 0
-	for _, ns := range namespaces {
-		if discovery.ShouldExcludeNamespace(ns, exclude) {
+	for _, ns := range includedNamepaces {
+		if discovery.ShouldExcludeNamespace(ns, excludedNamespaces) {
 			continue
 		}
 		active++
@@ -117,7 +117,7 @@ func (t *Tail) watchNamespaceSet(ctx context.Context, client dynamic.Namespaceab
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := t.watchResourceStream(ctx, nsClient, rule, nil, false); err != nil && !errors.Is(err, context.Canceled) {
+			if err := t.watchResourceStream(ctx, nsClient, rule, nil); err != nil && !errors.Is(err, context.Canceled) {
 				errCh <- err
 			}
 		}()
@@ -140,7 +140,7 @@ func (t *Tail) watchNamespaceSet(ctx context.Context, client dynamic.Namespaceab
 
 var errWatchClosed = errors.New("watch closed")
 
-func (t *Tail) watchResourceStream(ctx context.Context, client dynamic.ResourceInterface, rule config.ObjectRule, exclude map[string]struct{}, filterExclude bool) error {
+func (t *Tail) watchResourceStream(ctx context.Context, client dynamic.ResourceInterface, rule config.ObjectRule, excludedNamespaces []string) error {
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -152,7 +152,7 @@ func (t *Tail) watchResourceStream(ctx context.Context, client dynamic.ResourceI
 			}
 			return fmt.Errorf("watch %s: %w", rule.Kind, err)
 		}
-		if err := t.consumeWatch(ctx, watcher, rule, exclude, filterExclude); err != nil {
+		if err := t.consumeWatch(ctx, watcher, rule, excludedNamespaces); err != nil {
 			if errors.Is(err, errWatchClosed) {
 				continue
 			}
@@ -162,7 +162,7 @@ func (t *Tail) watchResourceStream(ctx context.Context, client dynamic.ResourceI
 	}
 }
 
-func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule config.ObjectRule, exclude map[string]struct{}, filterExclude bool) error {
+func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule config.ObjectRule, excludedNamespaces []string) error {
 	result := watcher.ResultChan()
 	for {
 		select {
@@ -178,7 +178,7 @@ func (t *Tail) consumeWatch(ctx context.Context, watcher watch.Interface, rule c
 			if !ok {
 				continue
 			}
-			if filterExclude && discovery.ShouldExcludeNamespace(obj.GetNamespace(), exclude) {
+			if discovery.ShouldExcludeNamespace(obj.GetNamespace(), excludedNamespaces) {
 				continue
 			}
 			switch event.Type {

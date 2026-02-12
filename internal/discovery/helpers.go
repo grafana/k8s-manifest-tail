@@ -36,25 +36,17 @@ func EffectiveNamespaces(rule config.ObjectRule, cfg *config.Config) []string {
 	return cloneAndDedupe(cfg.Namespaces)
 }
 
-// NewExcludeSet converts the configured exclusions into a lookup set.
-func NewExcludeSet(values []string) map[string]struct{} {
-	set := make(map[string]struct{}, len(values))
-	for _, v := range values {
-		if v == "" {
-			continue
-		}
-		set[v] = struct{}{}
-	}
-	return set
-}
-
 // ShouldExcludeNamespace reports whether the namespace should be ignored.
-func ShouldExcludeNamespace(ns string, exclude map[string]struct{}) bool {
-	if ns == "" {
+func ShouldExcludeNamespace(candidate string, excludedNamespaces []string) bool {
+	if excludedNamespaces == nil {
 		return false
 	}
-	_, ok := exclude[ns]
-	return ok
+	for _, namespace := range excludedNamespaces {
+		if candidate == namespace {
+			return true
+		}
+	}
+	return false
 }
 
 func cloneAndDedupe(input []string) []string {

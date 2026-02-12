@@ -100,7 +100,7 @@ func TestTailConsumeWatchHandlesEvents(t *testing.T) {
 		watcher.Stop()
 	}()
 
-	err := tail.consumeWatch(ctx, watcher, config.ObjectRule{APIVersion: "v1", Kind: "Pod"}, nil, false)
+	err := tail.consumeWatch(ctx, watcher, config.ObjectRule{APIVersion: "v1", Kind: "Pod"}, nil)
 	g.Expect(err).To(gomega.Equal(errWatchClosed))
 	wg.Wait()
 
