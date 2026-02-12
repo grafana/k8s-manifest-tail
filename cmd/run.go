@@ -50,11 +50,6 @@ func runRun(cmd *cobra.Command, args []string) error {
 		Metrics:    metrics,
 		Processor:  GetManifestProcessor(Configuration, logger),
 	}
-	total, err := tail.RunFullManifestCheck(ctx)
-	if err != nil {
-		return err
-	}
-	telemetry.Info(logger, fmt.Sprintf("Fetched %d manifest(s)", total))
 
 	refreshErrCh := make(chan error, 1)
 	refreshInterval, _ := Configuration.GetRefreshInterval() // Error checked during config validation
