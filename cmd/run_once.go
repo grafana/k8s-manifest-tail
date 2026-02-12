@@ -32,7 +32,7 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("create kubernetes clients: %w", err)
 	}
 
-	logger, shutdownTelemetry, err := telemetry.SetupLogging(ctx, Configuration.Logging)
+	logger, shutdownTelemetry, err := telemetry.SetupLogging(ctx, Configuration.Logging, cmd.OutOrStdout())
 	if err != nil {
 		return fmt.Errorf("configure telemetry logging: %w", err)
 	}

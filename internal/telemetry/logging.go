@@ -12,12 +12,13 @@ import (
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	"io"
 	"os"
 )
 
 // SetupLogging configures an OTLP log exporter if enabled. It returns the logger, a shutdown func, and any error.
-func SetupLogging(ctx context.Context, cfg config.LoggingConfig) (log.Logger, func(context.Context) error, error) {
-	consoleExporter, err := stdoutlog.New(stdoutlog.WithWriter(os.Stdout))
+func SetupLogging(ctx context.Context, cfg config.LoggingConfig, consoleOutput io.Writer) (log.Logger, func(context.Context) error, error) {
+	consoleExporter, err := stdoutlog.New(stdoutlog.WithWriter(consoleOutput))
 	if err != nil {
 		return nil, nil, fmt.Errorf("create console log exporter: %w", err)
 	}

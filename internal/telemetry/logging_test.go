@@ -1,6 +1,8 @@
 package telemetry
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"testing"
 
@@ -12,8 +14,9 @@ import (
 func TestSetupLoggingCreatesLogger(t *testing.T) {
 	t.Parallel()
 	g := gomega.NewWithT(t)
+	var stdout bytes.Buffer
 
-	logger, shutdown, err := SetupLogging(context.Background(), config.LoggingConfig{})
+	logger, shutdown, err := SetupLogging(context.Background(), config.LoggingConfig{}, bufio.NewWriter(&stdout))
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(logger).NotTo(gomega.BeNil())
 	g.Expect(shutdown).NotTo(gomega.BeNil())
