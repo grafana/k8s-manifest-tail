@@ -98,9 +98,6 @@ func ApplyEnvOverrides(cfg *Config) {
 	if value := strings.TrimSpace(os.Getenv("K8S_MANIFEST_TAIL_EXCLUDE_NAMESPACES")); value != "" {
 		cfg.ExcludeNamespaces = strings.Split(value, ",")
 	}
-	if value := strings.TrimSpace(os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")); value != "" {
-		cfg.Logging.OTLP.Endpoint = value
-	}
 	if value := strings.TrimSpace(os.Getenv("OTEL_EXPORTER_OTLP_INSECURE")); value != "" {
 		insecure, _ := strconv.ParseBool(value)
 		cfg.Logging.OTLP.Insecure = insecure
