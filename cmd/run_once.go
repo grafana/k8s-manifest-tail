@@ -44,12 +44,18 @@ func runRunOnce(cmd *cobra.Command, args []string) error {
 	defer func() { _ = shutdownMetrics(context.Background()) }()
 	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
 
+	var manifestLogger *logging.ManifestLogger
+	if Configuration.Logging.LogManifests {
+		manifestLogger = logging.NewManifestLogger(logger)
+	}
+
 	tail := pkg.Tail{
-		Clients:    clients,
-		Config:     Configuration,
-		DiffLogger: diffLogger,
-		Processor:  GetManifestProcessor(Configuration, logger),
-		Metrics:    metrics,
+		Clients:        clients,
+		Config:         Configuration,
+		DiffLogger:     diffLogger,
+		ManifestLogger: manifestLogger,
+		Processor:      GetManifestProcessor(Configuration),
+		Metrics:        metrics,
 	}
 
 	total, err := tail.RunFullManifestCheck(ctx)

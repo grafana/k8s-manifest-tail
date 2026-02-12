@@ -43,12 +43,18 @@ func runRun(cmd *cobra.Command, args []string) error {
 	defer func() { _ = shutdownMetrics(context.Background()) }()
 	diffLogger := logging.NewDiffLogger(Configuration.Logging, logger)
 
+	var manifestLogger *logging.ManifestLogger
+	if Configuration.Logging.LogManifests {
+		manifestLogger = logging.NewManifestLogger(logger)
+	}
+
 	tail := pkg.Tail{
-		Clients:    clients,
-		Config:     Configuration,
-		DiffLogger: diffLogger,
-		Metrics:    metrics,
-		Processor:  GetManifestProcessor(Configuration, logger),
+		Clients:        clients,
+		Config:         Configuration,
+		DiffLogger:     diffLogger,
+		ManifestLogger: manifestLogger,
+		Metrics:        metrics,
+		Processor:      GetManifestProcessor(Configuration),
 	}
 
 	refreshErrCh := make(chan error, 1)

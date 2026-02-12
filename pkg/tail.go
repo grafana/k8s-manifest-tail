@@ -20,11 +20,12 @@ import (
 )
 
 type Tail struct {
-	Clients    *kube.Clients
-	Config     *config.Config
-	DiffLogger logging.DiffLogger
-	Processor  manifest.Processor
-	Metrics    telemetry.MetricsRecorder
+	Clients        *kube.Clients
+	Config         *config.Config
+	DiffLogger     logging.DiffLogger
+	ManifestLogger *logging.ManifestLogger
+	Processor      manifest.Processor
+	Metrics        telemetry.MetricsRecorder
 }
 
 func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
@@ -43,6 +44,9 @@ func (t *Tail) RunFullManifestCheck(ctx context.Context) (int, error) {
 				return total, fmt.Errorf("process %s %s/%s: %w", rule.Kind, obj.GetNamespace(), obj.GetName(), err)
 			}
 			t.DiffLogger.Log(diff)
+			if t.ManifestLogger != nil {
+				t.ManifestLogger.Log(diff)
+			}
 			t.recordDiffMetrics(ctx, diff)
 		}
 	}

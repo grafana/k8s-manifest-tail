@@ -1,17 +1,16 @@
-package manifest
+package logging
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 	"testing"
 
 	"github.com/onsi/gomega"
 	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/embedded"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"github.com/grafana/k8s-manifest-tail/internal/config"
 )
 
 func TestLoggerEmitsManifestWithNamespace(t *testing.T) {
@@ -19,19 +18,24 @@ func TestLoggerEmitsManifestWithNamespace(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	stubLogger := &capturingLogger{}
-	next := &stubManifestProcessor{}
-	logger := NewLogger(stubLogger, next)
+	logger := NewManifestLogger(stubLogger)
 
-	obj := newUnstructured("v1", "ConfigMap", "default", "settings")
-	_, err := logger.Process(config.ObjectRule{Kind: "ConfigMap"}, obj, &config.Config{})
-	g.Expect(err).NotTo(gomega.HaveOccurred())
+	current := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "ConfigMap",
+		"metadata": map[string]interface{}{
+			"name":      "settings",
+			"namespace": "default",
+		},
+	}}
 
-	g.Expect(next.processed).To(gomega.HaveLen(1))
+	logger.Log(&manifest.Diff{Current: current})
+
 	g.Expect(stubLogger.records).To(gomega.HaveLen(1))
 
 	record := stubLogger.records[0]
 	g.Expect(record.Severity()).To(gomega.Equal(log.SeverityInfo))
-	rawJSON, marshalErr := obj.MarshalJSON()
+	rawJSON, marshalErr := current.MarshalJSON()
 	g.Expect(marshalErr).NotTo(gomega.HaveOccurred())
 	var compact bytes.Buffer
 	g.Expect(json.Compact(&compact, rawJSON)).To(gomega.Succeed())
@@ -47,24 +51,22 @@ func TestLoggerOmitsNamespaceForClusterScopedObjects(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	stubLogger := &capturingLogger{}
-	next := &stubManifestProcessor{}
-	logger := NewLogger(stubLogger, next)
+	logger := NewManifestLogger(stubLogger)
 
-	obj := newUnstructured("v1", "Node", "", "node-a")
-	_, err := logger.Process(config.ObjectRule{Kind: "Node"}, obj, &config.Config{})
-	g.Expect(err).NotTo(gomega.HaveOccurred())
+	current := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Node",
+		"metadata": map[string]interface{}{
+			"name": "node-a",
+		},
+	}}
+
+	logger.Log(&manifest.Diff{Current: current})
 
 	g.Expect(stubLogger.records).To(gomega.HaveLen(1))
 	attrs := recordAttributes(stubLogger.records[0])
 	g.Expect(attrs).To(gomega.HaveKeyWithValue("k8s.node.name", "node-a"))
 	g.Expect(attrs).NotTo(gomega.HaveKey("k8s.namespace.name"))
-
-	g.Expect(next.processed).To(gomega.HaveLen(1))
-
-	err = logger.Delete(config.ObjectRule{Kind: "Node"}, obj, &config.Config{})
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-	g.Expect(next.deleted).To(gomega.HaveLen(1))
-	g.Expect(next.deleted[0].GetName()).To(gomega.Equal("node-a"))
 }
 
 type capturingLogger struct {
@@ -78,21 +80,6 @@ func (c *capturingLogger) Emit(_ context.Context, record log.Record) {
 
 func (c *capturingLogger) Enabled(context.Context, log.EnabledParameters) bool {
 	return true
-}
-
-type stubManifestProcessor struct {
-	processed []*unstructured.Unstructured
-	deleted   []*unstructured.Unstructured
-}
-
-func (s *stubManifestProcessor) Process(_ config.ObjectRule, obj *unstructured.Unstructured, _ *config.Config) (*Diff, error) {
-	s.processed = append(s.processed, obj.DeepCopy())
-	return &Diff{Current: obj.DeepCopy()}, nil
-}
-
-func (s *stubManifestProcessor) Delete(_ config.ObjectRule, obj *unstructured.Unstructured, _ *config.Config) error {
-	s.deleted = append(s.deleted, obj.DeepCopy())
-	return nil
 }
 
 func recordAttributes(rec log.Record) map[string]string {
