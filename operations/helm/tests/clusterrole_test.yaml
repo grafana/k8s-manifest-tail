@@ -74,7 +74,7 @@ tests:
           content:
             apiGroups: ["networking.k8s.io"]
             resources:
-              - ingresss
+              - ingresses
             verbs: ["get", "list", "watch"]
 
   - it: should include correct labels
