@@ -92,7 +92,7 @@ jobs:
         uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112  # v4.3.0
 
       - name: Install helm-unittest plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+        run: helm plugin install --verify=false https://github.com/helm-unittest/helm-unittest.git
 
       - name: Run Helm unit tests
         run: make test-helm
