@@ -57,7 +57,7 @@ Image reference
 Image pull secrets - merges global and chart-level pull secrets
 */}}
 {{- define "k8s-manifest-tail.imagePullSecrets" -}}
-{{- $secrets := concat (.Values.global.image.pullSecrets | default list) (.Values.image.pullSecrets | default list) | uniq }}
+{{- $secrets := concat (.Values.global.image.pullSecrets | default (list)) (.Values.image.pullSecrets | default (list)) | uniq }}
 {{- if $secrets }}
 imagePullSecrets:
   {{- range $secrets }}
