@@ -6,7 +6,7 @@
   {{- if contains "/" .apiVersion }}
     {{- $group = first (splitList "/" .apiVersion) }}
   {{- end }}
-  {{- $resource := lower .kind | printf "%ss" }}
+  {{- $resource := include "k8s-manifest-tail.pluralize" .kind }}
   {{- if hasKey $rules $group }}
     {{- if not (has $resource (index $rules $group)) }}
       {{- $_ := set $rules $group (append (index $rules $group) $resource) }}

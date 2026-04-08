@@ -33,6 +33,9 @@ push-image: $(BUILD_DIR)/image-built-$(VERSION)
 clean: ## Remove build artifacts
 	rm -rf $(BUILD_DIR)
 
+operations/helm/README.md: operations/helm/README.md.gotmpl operations/helm/values.yaml
+	helm-docs
+
 ##@ Test
 
 lint: lint-go lint-helm lint-yaml lint-zizmor ## Run all lint checks

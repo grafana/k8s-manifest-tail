@@ -54,6 +54,30 @@ Image reference
 {{- end }}
 
 {{/*
+Pluralize a Kubernetes kind name to its resource name.
+Handles: Ingress->ingresses, Policy->policies, Pod->pods, etc.
+*/}}
+{{- define "k8s-manifest-tail.pluralize" -}}
+{{- $kind := lower . }}
+{{- if hasSuffix "ss" $kind }}
+{{- printf "%ses" $kind }}
+{{- else if hasSuffix "s" $kind }}
+{{- $kind }}
+{{- else if or (hasSuffix "ch" $kind) (hasSuffix "sh" $kind) (hasSuffix "x" $kind) (hasSuffix "z" $kind) }}
+{{- printf "%ses" $kind }}
+{{- else if hasSuffix "y" $kind }}
+  {{- $stem := trimSuffix "y" $kind }}
+  {{- if or (hasSuffix "a" $stem) (hasSuffix "e" $stem) (hasSuffix "i" $stem) (hasSuffix "o" $stem) (hasSuffix "u" $stem) }}
+  {{- printf "%ss" $kind }}
+  {{- else }}
+  {{- printf "%sies" $stem }}
+  {{- end }}
+{{- else }}
+{{- printf "%ss" $kind }}
+{{- end }}
+{{- end }}
+
+{{/*
 Image pull secrets - merges global and chart-level pull secrets
 */}}
 {{- define "k8s-manifest-tail.imagePullSecrets" -}}

@@ -22,16 +22,6 @@ tests:
       - isNotEmpty:
           path: rules
 
-  - it: should include get, list, and watch verbs
-    asserts:
-      - contains:
-          path: rules
-          content:
-            verbs:
-              - get
-              - list
-              - watch
-
   - it: should group core API resources together
     asserts:
       - contains:
@@ -76,6 +66,21 @@ tests:
             apiGroups: ["networking.k8s.io"]
             resources:
               - ingresses
+            verbs: ["get", "list", "watch"]
+
+  - it: should pluralize kinds ending in y correctly
+    set:
+      config:
+        objects:
+          - apiVersion: networking.k8s.io/v1
+            kind: NetworkPolicy
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["networking.k8s.io"]
+            resources:
+              - networkpolicies
             verbs: ["get", "list", "watch"]
 
   - it: should include correct labels

@@ -29,12 +29,22 @@ Fetches and monitors Kubernetes manifests from a running cluster
 | config.output.format | string | `"json"` | Output format, either `yaml` or `json` |
 | config.refreshInterval | string | `"24h"` | How often to do a full refresh of all resources |
 
+### Global
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| global.image.pullSecrets | list | `[]` | Global image pull secrets. Merged with `image.pullSecrets` |
+| global.image.registry | string | `""` | Global image registry override. Takes precedence over `image.registry` |
+
 ### Image
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| image.digest | string | `""` | Container image digest. When set, takes precedence over `image.tag` |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
-| image.repository | string | `"ghcr.io/grafana/k8s-manifest-tail"` | Container image repository |
+| image.pullSecrets | list | `[]` | Image pull secrets |
+| image.registry | string | `"ghcr.io"` | Container image registry |
+| image.repository | string | `"grafana/k8s-manifest-tail"` | Container image repository (without registry prefix) |
 | image.tag | string | `""` | Container image tag. Defaults to the chart's appVersion |
 
 ### RBAC
