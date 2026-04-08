@@ -18,6 +18,7 @@ spec:
         checksum/config: {{ toYaml .Values.config | sha256sum }}
     spec:
       serviceAccountName: {{ include "k8s-manifest-tail.serviceAccountName" . }}
+      {{- include "k8s-manifest-tail.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: k8s-manifest-tail
           image: {{ include "k8s-manifest-tail.image" . }}

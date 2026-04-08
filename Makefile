@@ -1,6 +1,7 @@
 GOLANGCI_LINT ?= golangci-lint
 BINARY := k8s-manifest-tail
 BUILD_DIR := build
+CHART_DIR := operations/helm
 
 VERSION ?= $(shell cat VERSION 2>/dev/null || echo dev)
 GIT_COMMIT ?= $(shell git rev-parse HEAD 2>/dev/null || echo "")
@@ -9,7 +10,7 @@ IMAGE ?= ghcr.io/grafana/$(BINARY)
 IMAGE_TAG := $(IMAGE):$(VERSION)
 PLATFORMS ?= linux/arm64,linux/amd64
 
-.PHONY: all build clean lint lint-go lint-zizmor test help
+.PHONY: all build clean lint lint-go lint-helm lint-yaml lint-zizmor test test-helm help
 
 ##@ Build
 
@@ -34,10 +35,23 @@ clean: ## Remove build artifacts
 
 ##@ Test
 
-lint: lint-go lint-zizmor ## Run all lint checks
+lint: lint-go lint-helm lint-yaml lint-zizmor ## Run all lint checks
 
 lint-go: ## Run golangci-lint against the codebase
 	$(GOLANGCI_LINT) run ./...
+
+lint-helm: ## Lint the Helm chart
+	helm lint $(CHART_DIR)
+	@if command -v ct >/dev/null 2>&1; then \
+		ct lint --config ct.yaml --charts $(CHART_DIR); \
+	fi
+
+lint-yaml: ## Lint YAML files with yamllint
+	@if command -v yamllint >/dev/null 2>&1; then \
+		yamllint $(CHART_DIR)/values.yaml $(CHART_DIR)/Chart.yaml; \
+	else \
+		echo "yamllint not installed, skipping"; \
+	fi
 
 lint-zizmor: ## Statically analyze GitHub Action workflows
 	@if command -v zizmor >/dev/null 2>&1; then \
@@ -46,8 +60,17 @@ lint-zizmor: ## Statically analyze GitHub Action workflows
 		docker run --rm -v $(shell pwd):/src --workdir /src ghcr.io/zizmorcore/zizmor:latest .; \
 	fi
 
-test: ## Execute unit and integration tests
+test: test-go test-helm ## Run all tests
+
+test-go: ## Execute Go unit and integration tests
 	go test ./...
+
+test-helm: ## Run Helm chart unit tests
+	@if command -v helm >/dev/null 2>&1 && helm plugin list | grep -q unittest; then \
+		helm unittest $(CHART_DIR); \
+	else \
+		docker run --rm -v $(shell pwd):/apps helmunittest/helm-unittest:latest $(CHART_DIR); \
+	fi
 
 
 ##@ General

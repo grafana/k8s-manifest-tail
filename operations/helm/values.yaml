@@ -1,13 +1,31 @@
+global:
+  image:
+    # -- Global image registry override. Takes precedence over `image.registry`
+    # @section -- Global
+    registry: ""
+    # -- Global image pull secrets. Merged with `image.pullSecrets`
+    # @section -- Global
+    pullSecrets: []
+
 image:
-  # -- Container image repository
+  # -- Container image registry
   # @section -- Image
-  repository: ghcr.io/grafana/k8s-manifest-tail
+  registry: ghcr.io
+  # -- Container image repository (without registry prefix)
+  # @section -- Image
+  repository: grafana/k8s-manifest-tail
   # -- Container image tag. Defaults to the chart's appVersion
   # @section -- Image
   tag: ""
+  # -- Container image digest. When set, takes precedence over `image.tag`
+  # @section -- Image
+  digest: ""
   # -- Image pull policy
   # @section -- Image
   pullPolicy: IfNotPresent
+  # -- Image pull secrets
+  # @section -- Image
+  pullSecrets: []
 
 serviceAccount:
   # -- Create a service account for the deployment

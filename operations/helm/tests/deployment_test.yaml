@@ -1,0 +1,232 @@
+suite: Deployment
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should render a Deployment with default values
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: k8s-manifest-tail
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: should use the correct image and tag
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/grafana/k8s-manifest-tail:0.1.1
+
+  - it: should use a custom image tag when set
+    set:
+      image.tag: "1.2.3"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/grafana/k8s-manifest-tail:1.2.3
+
+  - it: should use a custom image registry
+    set:
+      image.registry: docker.io
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/grafana/k8s-manifest-tail:0.1.1
+
+  - it: should prefer global image registry over image registry
+    set:
+      global.image.registry: registry.example.com
+      image.registry: docker.io
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example.com/grafana/k8s-manifest-tail:0.1.1
+
+  - it: should use digest when set
+    set:
+      image.digest: sha256:abcdef1234567890
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/grafana/k8s-manifest-tail@sha256:abcdef1234567890
+
+  - it: should prefer digest over tag
+    set:
+      image.tag: "1.2.3"
+      image.digest: sha256:abcdef1234567890
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/grafana/k8s-manifest-tail@sha256:abcdef1234567890
+
+  - it: should set the image pull policy
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+
+  - it: should not include imagePullSecrets by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+
+  - it: should include imagePullSecrets from image.pullSecrets
+    set:
+      image.pullSecrets:
+        - my-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: my-secret
+
+  - it: should include imagePullSecrets from global.image.pullSecrets
+    set:
+      global.image.pullSecrets:
+        - global-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: global-secret
+
+  - it: should merge global and image pullSecrets
+    set:
+      global.image.pullSecrets:
+        - global-secret
+      image.pullSecrets:
+        - local-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: global-secret
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: local-secret
+
+  - it: should mount the config volume
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /etc/k8s-manifest-tail
+            readOnly: true
+
+  - it: should reference the configmap volume
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: k8s-manifest-tail
+
+  - it: should set the service account name
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: k8s-manifest-tail
+
+  - it: should include a config checksum annotation
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: should not include extra env vars by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env
+
+  - it: should include extra env vars when set
+    set:
+      extraEnv:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://otel-collector:4317
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://otel-collector:4317
+
+  - it: should not set resources by default
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].resources
+
+  - it: should set resources when configured
+    set:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+
+  - it: should set node selector when configured
+    set:
+      nodeSelector:
+        kubernetes.io/os: linux
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+
+  - it: should set tolerations when configured
+    set:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "node-role.kubernetes.io/control-plane"
+            effect: "NoSchedule"
+
+  - it: should set affinity when configured
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.affinity
+
+  - it: should include correct labels
+    asserts:
+      - isNotEmpty:
+          path: metadata.labels["helm.sh/chart"]
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: k8s-manifest-tail
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+
+  - it: should set the release namespace
+    release:
+      namespace: monitoring
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring

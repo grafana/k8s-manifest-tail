@@ -1,0 +1,95 @@
+suite: ConfigMap
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: should create a ConfigMap
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: k8s-manifest-tail
+
+  - it: should contain a config.yaml key
+    asserts:
+      - isNotEmpty:
+          path: data["config.yaml"]
+
+  - it: should include the default refresh interval
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "refreshInterval: 24h"
+
+  - it: should include the default output directory
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "directory: /var/manifests"
+
+  - it: should include the default output format
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "format: json"
+
+  - it: should include the default excluded namespaces
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kube-system"
+
+  - it: should include default objects
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kind: Pod"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kind: Deployment"
+
+  - it: should reflect custom config values
+    set:
+      config:
+        refreshInterval: 1h
+        namespaces:
+          - default
+        excludeNamespaces: []
+        output:
+          directory: /tmp/manifests
+          format: yaml
+        logging:
+          logDiffs: compact
+          logManifests: false
+        objects:
+          - apiVersion: v1
+            kind: Service
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "refreshInterval: 1h"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "directory: /tmp/manifests"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "format: yaml"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kind: Service"
+
+  - it: should include correct labels
+    asserts:
+      - isNotEmpty:
+          path: metadata.labels["helm.sh/chart"]
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: k8s-manifest-tail
+
+  - it: should set the release namespace
+    release:
+      namespace: monitoring
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring
