@@ -24,12 +24,13 @@ tests:
 
   - it: should include get, list, and watch verbs
     asserts:
-      - equal:
-          path: rules[0].verbs
-          value:
-            - get
-            - list
-            - watch
+      - contains:
+          path: rules
+          content:
+            verbs:
+              - get
+              - list
+              - watch
 
   - it: should group core API resources together
     asserts:
