@@ -10,6 +10,7 @@ metadata:
   name: blue-pod
   namespace: blue
 spec:
+  automountServiceAccountToken: false
   containers:
     - name: blue-pod
       image: nginx

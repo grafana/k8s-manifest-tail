@@ -1,0 +1,4 @@
+API VERSION     KIND            NAMESPACE            NAME
+v1              Pod             red                  red-pod
+v1              Pod             blue                 blue-pod
+v1              Pod             green                green-pod

@@ -10,6 +10,7 @@ metadata:
   name: red-pod
   namespace: red
 spec:
+  automountServiceAccountToken: false
   containers:
   - name: red-pod
     image: nginx

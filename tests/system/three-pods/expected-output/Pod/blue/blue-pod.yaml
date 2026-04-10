@@ -3,9 +3,9 @@ kind: Pod
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"red-pod","namespace":"red"},"spec":{"automountServiceAccountToken":false,"containers":[{"env":[{"name":"COLOR","value":"red"},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"nginx","name":"red-pod"}]}}
-  name: red-pod
-  namespace: red
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"blue-pod","namespace":"blue"},"spec":{"automountServiceAccountToken":false,"containers":[{"env":[{"name":"COLOR","value":"blue"},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"spec.nodeName"}}}],"image":"nginx","name":"blue-pod"}]}}
+  name: blue-pod
+  namespace: blue
 spec:
   automountServiceAccountToken: false
   containers:
@@ -19,7 +19,7 @@ spec:
           fieldPath: spec.nodeName
     image: nginx
     imagePullPolicy: Always
-    name: red-pod
+    name: blue-pod
     resources: {}
     terminationMessagePath: /dev/termination-log
     terminationMessagePolicy: File

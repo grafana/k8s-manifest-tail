@@ -10,6 +10,7 @@ metadata:
   name: green-pod
   namespace: green
 spec:
+  automountServiceAccountToken: false
   containers:
   - name: green-pod
     image: nginx
