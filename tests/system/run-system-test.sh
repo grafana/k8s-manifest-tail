@@ -29,10 +29,12 @@ create_cluster() {
   echo "==> Creating test cluster"
   if ! kind get clusters | grep "${clusterName}"; then
     kind create cluster --name "${clusterName}"
+    sleep 5
   fi
 
   echo "  - Deploying dependencies"
   kubectl apply -f "${SCRIPT_DIR}/dependencies"
+  sleep 5
   echo "<== Test cluster ready"
 }
 
