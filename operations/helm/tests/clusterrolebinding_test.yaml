@@ -1,0 +1,69 @@
+suite: ClusterRoleBinding
+templates:
+  - templates/clusterrolebinding.yaml
+tests:
+  - it: should create a ClusterRoleBinding by default
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: metadata.name
+          value: k8s-manifest-tail
+
+  - it: should not create a ClusterRoleBinding when RBAC is disabled
+    set:
+      rbac.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should reference the correct ClusterRole
+    asserts:
+      - equal:
+          path: roleRef.apiGroup
+          value: rbac.authorization.k8s.io
+      - equal:
+          path: roleRef.kind
+          value: ClusterRole
+      - equal:
+          path: roleRef.name
+          value: k8s-manifest-tail
+
+  - it: should reference the correct ServiceAccount
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: k8s-manifest-tail
+            namespace: NAMESPACE
+
+  - it: should use a custom service account name
+    set:
+      serviceAccount.name: custom-sa
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: custom-sa
+            namespace: NAMESPACE
+
+  - it: should set the correct namespace on the subject
+    release:
+      namespace: monitoring
+    asserts:
+      - contains:
+          path: subjects
+          content:
+            kind: ServiceAccount
+            name: k8s-manifest-tail
+            namespace: monitoring
+
+  - it: should include correct labels
+    asserts:
+      - isNotEmpty:
+          path: metadata.labels["helm.sh/chart"]
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: k8s-manifest-tail

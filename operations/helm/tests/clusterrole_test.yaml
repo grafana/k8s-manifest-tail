@@ -1,0 +1,92 @@
+suite: ClusterRole
+templates:
+  - templates/clusterrole.yaml
+tests:
+  - it: should create a ClusterRole by default
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - equal:
+          path: metadata.name
+          value: k8s-manifest-tail
+
+  - it: should not create a ClusterRole when RBAC is disabled
+    set:
+      rbac.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should generate rules from config.objects
+    asserts:
+      - isNotEmpty:
+          path: rules
+
+  - it: should group core API resources together
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources:
+              - pods
+            verbs: ["get", "list", "watch"]
+
+  - it: should group apps API resources together
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apps"]
+            resources:
+              - deployments
+              - statefulsets
+              - daemonsets
+            verbs: ["get", "list", "watch"]
+
+  - it: should handle custom objects
+    set:
+      config:
+        objects:
+          - apiVersion: v1
+            kind: Service
+          - apiVersion: networking.k8s.io/v1
+            kind: Ingress
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources:
+              - services
+            verbs: ["get", "list", "watch"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["networking.k8s.io"]
+            resources:
+              - ingresses
+            verbs: ["get", "list", "watch"]
+
+  - it: should pluralize kinds ending in y correctly
+    set:
+      config:
+        objects:
+          - apiVersion: networking.k8s.io/v1
+            kind: NetworkPolicy
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["networking.k8s.io"]
+            resources:
+              - networkpolicies
+            verbs: ["get", "list", "watch"]
+
+  - it: should include correct labels
+    asserts:
+      - isNotEmpty:
+          path: metadata.labels["helm.sh/chart"]
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: k8s-manifest-tail

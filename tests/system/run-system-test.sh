@@ -30,7 +30,9 @@ create_cluster() {
   if ! kind get clusters | grep "${clusterName}"; then
     kind create cluster --name "${clusterName}"
   fi
+}
 
+deploy_dependencies() {
   echo "  - Deploying dependencies"
   kubectl apply -f "${SCRIPT_DIR}/dependencies"
   echo "<== Test cluster ready"
@@ -150,6 +152,8 @@ run_once_test() {
 if [[ "${CREATE_CLUSTER}" == "true" ]]; then
   create_cluster
 fi
+
+deploy_dependencies
 
 overall_rc=0
 failed_tests=()

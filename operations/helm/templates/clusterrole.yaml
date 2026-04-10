@@ -1,0 +1,31 @@
+{{- if .Values.rbac.create }}
+{{- /* Group resources by API group, inferred from config.objects */}}
+{{- $rules := dict }}
+{{- range .Values.config.objects }}
+  {{- $group := "" }}
+  {{- if contains "/" .apiVersion }}
+    {{- $group = first (splitList "/" .apiVersion) }}
+  {{- end }}
+  {{- $resource := include "k8s-manifest-tail.pluralize" .kind }}
+  {{- if hasKey $rules $group }}
+    {{- if not (has $resource (index $rules $group)) }}
+      {{- $_ := set $rules $group (append (index $rules $group) $resource) }}
+    {{- end }}
+  {{- else }}
+    {{- $_ := set $rules $group (list $resource) }}
+  {{- end }}
+{{- end }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "k8s-manifest-tail.fullname" . }}
+  labels:
+    {{- include "k8s-manifest-tail.labels" . | nindent 4 }}
+rules:
+  {{- range $group, $resources := $rules }}
+  - apiGroups: ["{{ $group }}"]
+    resources:
+      {{- toYaml $resources | nindent 6 }}
+    verbs: ["get", "list", "watch"]
+  {{- end }}
+{{- end }}

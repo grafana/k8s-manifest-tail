@@ -1,0 +1,13 @@
+output:
+  directory: expected-output
+
+logging:
+  logDiffs: detailed
+
+objects:
+  - apiVersion: v1
+    kind: Pod
+    namespaces:
+      - red
+      - blue
+      - green

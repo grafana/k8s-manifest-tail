@@ -1,0 +1,101 @@
+global:
+  image:
+    # -- Global image registry override. Takes precedence over `image.registry`
+    # @section -- Global
+    registry: ""
+    # -- Global image pull secrets. Merged with `image.pullSecrets`
+    # @section -- Global
+    pullSecrets: []
+
+image:
+  # -- Container image registry
+  # @section -- Image
+  registry: ghcr.io
+  # -- Container image repository (without registry prefix)
+  # @section -- Image
+  repository: grafana/k8s-manifest-tail
+  # -- Container image tag. Defaults to the chart's appVersion
+  # @section -- Image
+  tag: ""
+  # -- Container image digest. When set, takes precedence over `image.tag`
+  # @section -- Image
+  digest: ""
+  # -- Image pull policy
+  # @section -- Image
+  pullPolicy: IfNotPresent
+  # -- Image pull secrets
+  # @section -- Image
+  pullSecrets: []
+
+serviceAccount:
+  # -- Create a service account for the deployment
+  # @section -- Service Account
+  create: true
+  # -- Name of the service account. Defaults to the release name
+  # @section -- Service Account
+  name: ""
+  # -- Annotations to add to the service account
+  # @section -- Service Account
+  annotations: {}
+
+rbac:
+  # -- Create a ClusterRole and ClusterRoleBinding. Rules are inferred from `config.objects`
+  # @section -- RBAC
+  create: true
+
+config:
+  # -- How often to do a full refresh of all resources
+  # @section -- Application Config
+  refreshInterval: 24h
+  # -- Namespaces to include. Empty means all namespaces
+  # @section -- Application Config
+  namespaces: []
+  # -- Namespaces to exclude
+  # @section -- Application Config
+  excludeNamespaces:
+    - kube-system
+  output:
+    # -- Directory to write manifests into
+    # @section -- Application Config
+    directory: /var/manifests
+    # -- Output format, either `yaml` or `json`
+    # @section -- Application Config
+    format: json
+  logging:
+    # -- Log resource diffs. One of `false`, `compact`, or `detailed`
+    # @section -- Application Config
+    logDiffs: detailed
+    # -- Log the full manifest payload on each change
+    # @section -- Application Config
+    logManifests: true
+  # -- List of Kubernetes resources to watch. Each entry requires `apiVersion` and `kind`
+  # @section -- Application Config
+  objects:
+    - apiVersion: v1
+      kind: Pod
+    - apiVersion: apps/v1
+      kind: Deployment
+    - apiVersion: apps/v1
+      kind: StatefulSet
+    - apiVersion: apps/v1
+      kind: DaemonSet
+
+# -- Extra environment variables to add to the container (e.g. OTLP endpoint settings)
+# @section -- Deployment
+extraEnv: []
+
+# -- Resource requests and limits for the container
+# @section -- Deployment
+resources: {}
+
+# -- Node selector for pod scheduling
+# @section -- Deployment
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling
+# @section -- Deployment
+tolerations: []
+
+# -- Affinity rules for pod scheduling
+# @section -- Deployment
+affinity: {}

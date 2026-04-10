@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(helm lint:*)",
+      "Bash(helm template:*)",
+      "Bash(helm-docs:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(curl:*)"
+    ]
+  }
+}
