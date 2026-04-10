@@ -116,6 +116,8 @@ jobs:
 
       - name: Create Kind cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc  # v1.14.0
+        with:
+          cluster_name: k8s-manifest-tail-test-cluster
 
       - name: Run system tests
         working-directory: tests/system
