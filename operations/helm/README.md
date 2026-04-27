@@ -1,6 +1,6 @@
 # k8s-manifest-tail
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
+![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
 
 Fetches and monitors Kubernetes manifests from a running cluster
 
@@ -24,7 +24,7 @@ Fetches and monitors Kubernetes manifests from a running cluster
 | config.logging.logDiffs | string | `"detailed"` | Log resource diffs. One of `false`, `compact`, or `detailed` |
 | config.logging.logManifests | bool | `true` | Log the full manifest payload on each change |
 | config.namespaces | list | `[]` | Namespaces to include. Empty means all namespaces |
-| config.objects | list | `[{"apiVersion":"v1","kind":"Pod"},{"apiVersion":"apps/v1","kind":"Deployment"},{"apiVersion":"apps/v1","kind":"StatefulSet"},{"apiVersion":"apps/v1","kind":"DaemonSet"}]` | List of Kubernetes resources to watch. Each entry requires `apiVersion` and `kind` |
+| config.objects | list | `[]` | List of Kubernetes resources to watch. Each entry requires `apiVersion` and `kind`. At least one object must be provided. |
 | config.output.directory | string | `"/var/manifests"` | Directory to write manifests into |
 | config.output.format | string | `"json"` | Output format, either `yaml` or `json` |
 | config.refreshInterval | string | `"24h"` | How often to do a full refresh of all resources |

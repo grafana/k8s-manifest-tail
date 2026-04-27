@@ -68,17 +68,21 @@ config:
     # -- Log the full manifest payload on each change
     # @section -- Application Config
     logManifests: true
-  # -- List of Kubernetes resources to watch. Each entry requires `apiVersion` and `kind`
+  # -- List of Kubernetes resources to watch. Each entry requires `apiVersion` and `kind`. At least one object must be provided.
   # @section -- Application Config
-  objects:
-    - apiVersion: v1
-      kind: Pod
-    - apiVersion: apps/v1
-      kind: Deployment
-    - apiVersion: apps/v1
-      kind: StatefulSet
-    - apiVersion: apps/v1
-      kind: DaemonSet
+  objects: []
+  # Example:
+  # objects:
+  #   - apiVersion: v1
+  #     kind: Pod
+  #   - apiVersion: apps/v1
+  #     kind: Deployment
+  #     # Restrict this entry to specific namespaces (overrides config.namespaces)
+  #     namespaces:
+  #       - default
+  #       - production
+  #     # Only match resources whose name matches this regex
+  #     namePattern: ^frontend-.*
 
 # -- Extra environment variables to add to the container (e.g. OTLP endpoint settings)
 # @section -- Deployment

@@ -2,5 +2,5 @@ apiVersion: v2
 name: k8s-manifest-tail
 description: Fetches and monitors Kubernetes manifests from a running cluster
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "0.1.1"
