@@ -1,6 +1,11 @@
 suite: ConfigMap
 templates:
   - templates/configmap.yaml
+set:
+  config:
+    objects:
+      - apiVersion: v1
+        kind: Pod
 tests:
   - it: should create a ConfigMap
     asserts:
@@ -39,7 +44,50 @@ tests:
           path: data["config.yaml"]
           pattern: "kube-system"
 
-  - it: should include default objects
+  - it: should fail when no objects are configured
+    set:
+      config:
+        objects: []
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            No objects have been specified for manifest capture.
+            Please set the list of object types you want to capture:
+            config:
+              objects:
+                - apiVersion: apps/v1
+                  kind: Deployment
+                - apiVersion: apps/v1
+                  kind: StatefulSet
+                - apiVersion: apps/v1
+                  kind: DaemonSet
+
+  - it: should fail when objects is unset
+    set:
+      config:
+        objects: ~
+    asserts:
+      - failedTemplate:
+          errorMessage: |-
+            No objects have been specified for manifest capture.
+            Please set the list of object types you want to capture:
+            config:
+              objects:
+                - apiVersion: apps/v1
+                  kind: Deployment
+                - apiVersion: apps/v1
+                  kind: StatefulSet
+                - apiVersion: apps/v1
+                  kind: DaemonSet
+
+  - it: should render configured objects
+    set:
+      config:
+        objects:
+          - apiVersion: v1
+            kind: Pod
+          - apiVersion: apps/v1
+            kind: Deployment
     asserts:
       - matchRegex:
           path: data["config.yaml"]

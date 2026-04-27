@@ -1,6 +1,17 @@
 suite: ClusterRole
 templates:
   - templates/clusterrole.yaml
+set:
+  config:
+    objects:
+      - apiVersion: v1
+        kind: Pod
+      - apiVersion: apps/v1
+        kind: Deployment
+      - apiVersion: apps/v1
+        kind: StatefulSet
+      - apiVersion: apps/v1
+        kind: DaemonSet
 tests:
   - it: should create a ClusterRole by default
     asserts:

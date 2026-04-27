@@ -1,3 +1,17 @@
+{{- if not .Values.config.objects }}
+  {{- $msg := list "" "No objects have been specified for manifest capture." }}
+  {{- $msg = append $msg "Please set the list of object types you want to capture:" }}
+  {{- $msg = append $msg "config:" }}
+  {{- $msg = append $msg "  objects:" }}
+  {{- $msg = append $msg "    - apiVersion: apps/v1" }}
+  {{- $msg = append $msg "      kind: Deployment" }}
+  {{- $msg = append $msg "    - apiVersion: apps/v1" }}
+  {{- $msg = append $msg "      kind: StatefulSet" }}
+  {{- $msg = append $msg "    - apiVersion: apps/v1" }}
+  {{- $msg = append $msg "      kind: DaemonSet" }}
+  {{- fail (join "\n" $msg) }}
+{{- fail "config.objects must contain at least one Kubernetes resource to watch" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
