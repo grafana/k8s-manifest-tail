@@ -7,6 +7,14 @@ global:
     # @section -- Global
     pullSecrets: []
 
+# -- Override the chart name used for resource naming
+# @section -- Naming
+nameOverride: ""
+
+# -- Override the fully qualified app name used for resource naming
+# @section -- Naming
+fullnameOverride: ""
+
 image:
   # -- Container image registry
   # @section -- Image

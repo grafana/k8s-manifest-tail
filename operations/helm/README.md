@@ -29,6 +29,13 @@ Fetches and monitors Kubernetes manifests from a running cluster
 | config.output.format | string | `"json"` | Output format, either `yaml` or `json` |
 | config.refreshInterval | string | `"24h"` | How often to do a full refresh of all resources |
 
+### Naming
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| fullnameOverride | string | `""` | Override the fully qualified app name used for resource naming |
+| nameOverride | string | `""` | Override the chart name used for resource naming |
+
 ### Global
 
 | Key | Type | Default | Description |

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+* Update naming to use release name.
+
 ## 0.1.1
 
 * `config.objects` now defaults to an empty list. The chart fails to render unless at least one object to watch is provided. (@petewall)
