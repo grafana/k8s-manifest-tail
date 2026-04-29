@@ -8,7 +8,7 @@ tests:
           of: Deployment
       - equal:
           path: metadata.name
-          value: k8s-manifest-tail
+          value: RELEASE-NAME-k8s-manifest-tail
       - equal:
           path: spec.replicas
           value: 1
@@ -124,13 +124,13 @@ tests:
           content:
             name: config
             configMap:
-              name: k8s-manifest-tail
+              name: RELEASE-NAME-k8s-manifest-tail
 
   - it: should set the service account name
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
-          value: k8s-manifest-tail
+          value: RELEASE-NAME-k8s-manifest-tail
 
   - it: should include a config checksum annotation
     asserts:
@@ -230,3 +230,43 @@ tests:
       - equal:
           path: metadata.namespace
           value: monitoring
+
+  - it: should incorporate the release name when used as a subchart
+    release:
+      name: parent
+    asserts:
+      - equal:
+          path: metadata.name
+          value: parent-k8s-manifest-tail
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: parent-k8s-manifest-tail
+
+  - it: should not duplicate the chart name when release name contains it
+    release:
+      name: k8s-manifest-tail-prod
+    asserts:
+      - equal:
+          path: metadata.name
+          value: k8s-manifest-tail-prod
+
+  - it: should respect fullnameOverride
+    set:
+      fullnameOverride: my-app
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-app
+
+  - it: should respect nameOverride
+    set:
+      nameOverride: tail
+    release:
+      name: parent
+    asserts:
+      - equal:
+          path: metadata.name
+          value: parent-tail
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: tail

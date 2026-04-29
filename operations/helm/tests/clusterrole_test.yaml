@@ -19,7 +19,7 @@ tests:
           of: ClusterRole
       - equal:
           path: metadata.name
-          value: k8s-manifest-tail
+          value: RELEASE-NAME-k8s-manifest-tail
 
   - it: should not create a ClusterRole when RBAC is disabled
     set:
