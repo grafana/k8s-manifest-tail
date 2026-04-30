@@ -137,6 +137,28 @@ tests:
       - isNotEmpty:
           path: spec.template.metadata.annotations["checksum/config"]
 
+  - it: should not include extra pod annotations by default
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations
+      - notExists:
+          path: spec.template.metadata.annotations["custom.example.com/key"]
+
+  - it: should include pod annotations when configured
+    set:
+      podAnnotations:
+        custom.example.com/key: value
+        prometheus.io/scrape: "true"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["custom.example.com/key"]
+          value: value
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+
   - it: should not include extra env vars by default
     asserts:
       - notExists:

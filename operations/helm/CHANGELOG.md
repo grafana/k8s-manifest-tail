@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+* Add `podAnnotations` value for setting annotations on the pod.
+
 ## 0.1.2
 
 * Update naming to use release name.
