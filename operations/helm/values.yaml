@@ -96,6 +96,10 @@ config:
 # @section -- Deployment
 extraEnv: []
 
+# -- Annotations to add to the pod
+# @section -- Deployment
+podAnnotations: {}
+
 # -- Resource requests and limits for the container
 # @section -- Deployment
 resources: {}

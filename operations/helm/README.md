@@ -1,6 +1,6 @@
 # k8s-manifest-tail
 
-![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
+![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
 
 Fetches and monitors Kubernetes manifests from a running cluster
 
@@ -13,6 +13,7 @@ Fetches and monitors Kubernetes manifests from a running cluster
 | affinity | object | `{}` | Affinity rules for pod scheduling |
 | extraEnv | list | `[]` | Extra environment variables to add to the container (e.g. OTLP endpoint settings) |
 | nodeSelector | object | `{}` | Node selector for pod scheduling |
+| podAnnotations | object | `{}` | Annotations to add to the pod |
 | resources | object | `{}` | Resource requests and limits for the container |
 | tolerations | list | `[]` | Tolerations for pod scheduling |
 
