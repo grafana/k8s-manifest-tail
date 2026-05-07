@@ -3,7 +3,7 @@ global:
     # -- Global image registry override. Takes precedence over `image.registry`
     # @section -- Global
     registry: ""
-    # -- Global image pull secrets. Merged with `image.pullSecrets`
+    # -- Global image pull secrets. Merged with `image.pullSecrets`. Each entry may be a string or a `{name: foo}` map
     # @section -- Global
     pullSecrets: []
 
@@ -31,7 +31,7 @@ image:
   # -- Image pull policy
   # @section -- Image
   pullPolicy: IfNotPresent
-  # -- Image pull secrets
+  # -- Image pull secrets. Each entry may be a string or a `{name: foo}` map
   # @section -- Image
   pullSecrets: []
 
