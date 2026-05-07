@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+* Improve handling for image pull secrets.
+
 ## 0.1.3
 
 * Add `podAnnotations` value for setting annotations on the pod.
