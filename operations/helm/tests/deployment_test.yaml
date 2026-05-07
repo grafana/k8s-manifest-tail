@@ -72,10 +72,20 @@ tests:
       - notExists:
           path: spec.template.spec.imagePullSecrets
 
-  - it: should include imagePullSecrets from image.pullSecrets
+  - it: should accept imagePullSecrets as bare strings
     set:
       image.pullSecrets:
         - my-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: my-secret
+
+  - it: should accept imagePullSecrets as LocalObjectReference maps
+    set:
+      image.pullSecrets:
+        - name: my-secret
     asserts:
       - contains:
           path: spec.template.spec.imagePullSecrets
@@ -97,7 +107,7 @@ tests:
       global.image.pullSecrets:
         - global-secret
       image.pullSecrets:
-        - local-secret
+        - name: local-secret
     asserts:
       - contains:
           path: spec.template.spec.imagePullSecrets

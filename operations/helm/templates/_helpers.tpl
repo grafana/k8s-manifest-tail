@@ -89,14 +89,19 @@ Handles: Ingress->ingresses, Policy->policies, Pod->pods, etc.
 {{- end }}
 
 {{/*
-Image pull secrets - merges global and chart-level pull secrets
+Image pull secrets. Merges global and chart-level pull secrets.
+Each entry may be a bare string or a LocalObjectReference map ({name: foo}).
 */}}
 {{- define "k8s-manifest-tail.imagePullSecrets" -}}
-{{- $secrets := concat (.Values.global.image.pullSecrets | default (list)) (.Values.image.pullSecrets | default (list)) | uniq }}
+{{- $secrets := concat (.Values.global.image.pullSecrets | default (list)) (.Values.image.pullSecrets | default (list)) }}
 {{- if $secrets }}
 imagePullSecrets:
   {{- range $secrets }}
+  {{- if kindIs "map" . }}
+  - {{ toYaml . | trim }}
+  {{- else }}
   - name: {{ . }}
+  {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
