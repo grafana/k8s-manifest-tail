@@ -116,6 +116,235 @@ func TestGetMinimalDifferenceListChange(t *testing.T) {
 	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{"a", "b"}}}))
 }
 
+func TestGetMinimalDifferenceContainerImageChange(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	prev := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}}
+	curr := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v2"},
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{Previous: prev, Current: curr})
+	g.Expect(prevDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+	}}}))
+	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v2"},
+	}}}))
+}
+
+func TestGetMinimalDifferenceContainerAdded(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	prev := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+	}}}}
+	curr := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{Previous: prev, Current: curr})
+	g.Expect(prevDiff).To(gomega.BeNil())
+	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}))
+}
+
+func TestGetMinimalDifferenceContainerRemoved(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	prev := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}}
+	curr := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+	}}}}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{Previous: prev, Current: curr})
+	g.Expect(prevDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}))
+	g.Expect(currDiff).To(gomega.BeNil())
+}
+
+func TestGetMinimalDifferenceMixedAnnotationAndContainerChange(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	makeManifest := func(gitRef, imageTag string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"example.com/service_git_ref": gitRef,
+							"checksum/config":             "abc123",
+						},
+					},
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name":  "app",
+								"image": "example.com/app:" + imageTag,
+								"args":  []interface{}{"-target=app", "-log.level=info"},
+								"ports": []interface{}{
+									map[string]interface{}{"name": "http", "containerPort": int64(8080), "protocol": "TCP"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}}
+	}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{
+		Previous: makeManifest("abc1234", "abc1234"),
+		Current:  makeManifest("def5678", "def5678"),
+	})
+	g.Expect(prevDiff).To(gomega.Equal(map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"example.com/service_git_ref": "abc1234",
+					},
+				},
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{"name": "app", "image": "example.com/app:abc1234"},
+					},
+				},
+			},
+		},
+	}))
+	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"example.com/service_git_ref": "def5678",
+					},
+				},
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{"name": "app", "image": "example.com/app:def5678"},
+					},
+				},
+			},
+		},
+	}))
+}
+
+func TestGetMinimalDifferenceContainerImageOnlyChange(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	makeContainer := func(imageTag string) map[string]interface{} {
+		return map[string]interface{}{
+			"name":  "app",
+			"image": "example.com/app:" + imageTag,
+			"args":  []interface{}{"-config=/etc/app/config.yaml", "-target=app"},
+			"env": []interface{}{
+				map[string]interface{}{"name": "FOO", "value": "redacted"},
+				map[string]interface{}{"name": "BAR", "value": "redacted"},
+			},
+			"imagePullPolicy": "IfNotPresent",
+			"ports": []interface{}{
+				map[string]interface{}{"name": "http", "containerPort": int64(8080), "protocol": "TCP"},
+				map[string]interface{}{"name": "grpc", "containerPort": int64(9090), "protocol": "TCP"},
+			},
+			"resources": map[string]interface{}{
+				"limits":   map[string]interface{}{"cpu": "2", "memory": "4Gi"},
+				"requests": map[string]interface{}{"cpu": "1", "memory": "1Gi"},
+			},
+			"terminationMessagePath":   "/dev/termination-log",
+			"terminationMessagePolicy": "File",
+			"volumeMounts": []interface{}{
+				map[string]interface{}{"name": "scratch", "mountPath": "/data"},
+				map[string]interface{}{"name": "config", "mountPath": "/etc/app", "readOnly": true},
+			},
+		}
+	}
+	makeManifest := func(imageTag string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{makeContainer(imageTag)},
+					},
+				},
+			},
+		}}
+	}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{
+		Previous: makeManifest("abc1234"),
+		Current:  makeManifest("def5678"),
+	})
+	g.Expect(prevDiff).To(gomega.Equal(map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "app",
+							"image": "example.com/app:abc1234",
+						},
+					},
+				},
+			},
+		},
+	}))
+	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{
+		"spec": map[string]interface{}{
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "app",
+							"image": "example.com/app:def5678",
+						},
+					},
+				},
+			},
+		},
+	}))
+}
+
+func TestGetMinimalDifferenceSliceReorderProducesNoDiff(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	prev := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+	}}}}
+	curr := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"containers": []interface{}{
+		map[string]interface{}{"name": "sidecar", "image": "sidecar:v1"},
+		map[string]interface{}{"name": "app", "image": "app:v1"},
+	}}}}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{Previous: prev, Current: curr})
+	g.Expect(prevDiff).To(gomega.BeNil())
+	g.Expect(currDiff).To(gomega.BeNil())
+}
+
+func TestGetMinimalDifferenceSliceWithoutMergeKeyStaysAtomic(t *testing.T) {
+	t.Parallel()
+	g := gomega.NewWithT(t)
+	prev := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"rules": []interface{}{
+		map[string]interface{}{"host": "a.example.com", "path": "/a"},
+	}}}}
+	curr := &unstructured.Unstructured{Object: map[string]interface{}{"spec": map[string]interface{}{"rules": []interface{}{
+		map[string]interface{}{"host": "a.example.com", "path": "/b"},
+	}}}}
+	prevDiff, currDiff := logging.GetMinimalDifference(&manifest.Diff{Previous: prev, Current: curr})
+	g.Expect(prevDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"rules": []interface{}{
+		map[string]interface{}{"host": "a.example.com", "path": "/a"},
+	}}}))
+	g.Expect(currDiff).To(gomega.Equal(map[string]interface{}{"spec": map[string]interface{}{"rules": []interface{}{
+		map[string]interface{}{"host": "a.example.com", "path": "/b"},
+	}}}))
+}
+
 func TestGetMinimalDifferenceComplexChange(t *testing.T) {
 	t.Parallel()
 	g := gomega.NewWithT(t)

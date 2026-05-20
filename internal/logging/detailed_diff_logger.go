@@ -92,6 +92,13 @@ func GetMinimalDifference(diff *manifest.Diff) (interface{}, interface{}) {
 	return computeDiff(prevMap, currMap)
 }
 
+// computeDiff recursively produces minimal prev/curr maps containing only changed fields.
+// Call structure:
+//   - Nested maps: computeDiff recurses directly.
+//   - Slices with a merge key (e.g. "name"): delegates to diffSlices → diffSlicesByKey,
+//     which matches elements by key and calls back into computeDiff per pair.
+//   - Slices without a merge key: treated atomically (full slice returned, no recursion).
+//   - Scalar values: compared with DeepEqual; included only when different.
 func computeDiff(prev, curr map[string]interface{}) (map[string]interface{}, map[string]interface{}) {
 	if prev == nil && curr == nil {
 		return nil, nil
@@ -139,6 +146,18 @@ func computeDiff(prev, curr map[string]interface{}) (map[string]interface{}, map
 				}
 				continue
 			}
+			pSlice, pIsSlice := pVal.([]interface{})
+			cSlice, cIsSlice := cVal.([]interface{})
+			if pIsSlice && cIsSlice {
+				subPrev, subCurr := diffSlices(pSlice, cSlice)
+				if len(subPrev) > 0 {
+					prevResult[key] = subPrev
+				}
+				if len(subCurr) > 0 {
+					currResult[key] = subCurr
+				}
+				continue
+			}
 			if reflect.DeepEqual(pVal, cVal) {
 				continue
 			}
@@ -152,6 +171,103 @@ func computeDiff(prev, curr map[string]interface{}) (map[string]interface{}, map
 	}
 	if len(currResult) == 0 {
 		currResult = nil
+	}
+	return prevResult, currResult
+}
+
+// mergeKeyCandidates lists field names, in priority order, that are treated
+// as natural merge keys for slices of objects. `name` covers the vast
+// majority of Kubernetes keyed lists (containers, env, ports, volumes,
+// volumeMounts, initContainers, ...).
+var mergeKeyCandidates = []string{"name"}
+
+func diffSlices(prev, curr []interface{}) ([]interface{}, []interface{}) {
+	if reflect.DeepEqual(prev, curr) {
+		return nil, nil
+	}
+	if key := findMergeKey(prev, curr); key != "" {
+		return diffSlicesByKey(prev, curr, key)
+	}
+	prevCopy, _ := runtime.DeepCopyJSONValue(prev).([]interface{})
+	currCopy, _ := runtime.DeepCopyJSONValue(curr).([]interface{})
+	return prevCopy, currCopy
+}
+
+func findMergeKey(prev, curr []interface{}) string {
+	if len(prev) == 0 || len(curr) == 0 {
+		return ""
+	}
+	for _, candidate := range mergeKeyCandidates {
+		if allHaveKey(prev, candidate) && allHaveKey(curr, candidate) {
+			return candidate
+		}
+	}
+	return ""
+}
+
+func allHaveKey(slice []interface{}, key string) bool {
+	for _, v := range slice {
+		m, ok := v.(map[string]interface{})
+		if !ok {
+			return false
+		}
+		if _, exists := m[key]; !exists {
+			return false
+		}
+	}
+	return true
+}
+
+func diffSlicesByKey(prev, curr []interface{}, key string) ([]interface{}, []interface{}) {
+	prevIndex := make(map[string]map[string]interface{}, len(prev))
+	prevOrder := make([]string, 0, len(prev))
+	for _, v := range prev {
+		m := v.(map[string]interface{})
+		k := fmt.Sprint(m[key])
+		if _, seen := prevIndex[k]; !seen {
+			prevOrder = append(prevOrder, k)
+		}
+		prevIndex[k] = m
+	}
+	currIndex := make(map[string]map[string]interface{}, len(curr))
+	currOrder := make([]string, 0, len(curr))
+	for _, v := range curr {
+		m := v.(map[string]interface{})
+		k := fmt.Sprint(m[key])
+		if _, seen := currIndex[k]; !seen {
+			currOrder = append(currOrder, k)
+		}
+		currIndex[k] = m
+	}
+
+	var prevResult, currResult []interface{}
+	for _, k := range prevOrder {
+		pElem := prevIndex[k]
+		cElem, ok := currIndex[k]
+		if !ok {
+			prevResult = append(prevResult, runtime.DeepCopyJSONValue(pElem))
+			continue
+		}
+		subPrev, subCurr := computeDiff(pElem, cElem)
+		if len(subPrev) == 0 && len(subCurr) == 0 {
+			continue
+		}
+		if subPrev == nil {
+			subPrev = map[string]interface{}{}
+		}
+		if subCurr == nil {
+			subCurr = map[string]interface{}{}
+		}
+		subPrev[key] = runtime.DeepCopyJSONValue(pElem[key])
+		subCurr[key] = runtime.DeepCopyJSONValue(cElem[key])
+		prevResult = append(prevResult, subPrev)
+		currResult = append(currResult, subCurr)
+	}
+	for _, k := range currOrder {
+		if _, ok := prevIndex[k]; ok {
+			continue
+		}
+		currResult = append(currResult, runtime.DeepCopyJSONValue(currIndex[k]))
 	}
 	return prevResult, currResult
 }
