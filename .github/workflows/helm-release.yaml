@@ -13,7 +13,7 @@ permissions: {}
 
 jobs:
   release-chart:
-    uses: grafana/helm-charts/.github/workflows/update-helm-repo.yaml@fa81478435d74d219108506981c03827715068bc
+    uses: grafana/helm-charts/.github/workflows/update-helm-repo.yaml@d7c4f4491dbe46d853833cd15a35159c28061f39
     permissions:
       contents: write
       id-token: write
@@ -22,8 +22,7 @@ jobs:
       charts_dir: operations
       cr_configfile: cr.yaml
       ct_configfile: ct.yaml
-    secrets:
-      vault_repo_secret_name: github-app
+      github_app: k8s-manifest-tail
 
   release:
     runs-on: ubuntu-latest
@@ -79,28 +78,15 @@ jobs:
             esac
           done <<< "$deps"
 
-      - name: Retrieve GitHub App credentials from Vault
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760  # v1.1.0
-        env:
-          VAULT_REPO_SECRET_NAME: github-app
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GITHUB_APP_ID=${{ env.VAULT_REPO_SECRET_NAME }}:app-id
-            PRIVATE_KEY=${{ env.VAULT_REPO_SECRET_NAME }}:private-key
-
-      - name: Generate GitHub App Token
-        if: env.GITHUB_APP_ID != ''
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          github_app: k8s-manifest-tail
 
       - name: Set the token
         env:
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: echo "AUTHTOKEN=${APP_TOKEN}" >> "${GITHUB_ENV}"
 
       - name: Install CR tool
@@ -115,7 +101,7 @@ jobs:
           tar -xzf cr.tar.gz -C "${CR_TOOL_PATH}"
           rm -f cr.tar.gz
 
-      - name: Create helm package
+      - name: Create Helm package
         env:
           CHARTPATH: ${{ steps.parse-chart.outputs.chartpath }}
         working-directory: source
@@ -124,7 +110,7 @@ jobs:
           echo "Result of chart package:"
           ls -l "${CR_PACKAGE_PATH}"
 
-      - name: Make github release
+      - name: Make GitHub release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3
         with:
           name: ${{ steps.parse-chart.outputs.tagname }}
