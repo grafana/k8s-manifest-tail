@@ -1,6 +1,6 @@
 # k8s-manifest-tail
 
-![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
+![Version: 0.1.5](https://img.shields.io/badge/Version-0.1.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.2](https://img.shields.io/badge/AppVersion-0.1.2-informational?style=flat-square)
 
 Fetches and monitors Kubernetes manifests from a running cluster
 
@@ -41,7 +41,7 @@ Fetches and monitors Kubernetes manifests from a running cluster
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| global.image.pullSecrets | list | `[]` | Global image pull secrets. Merged with `image.pullSecrets` |
+| global.image.pullSecrets | list | `[]` | Global image pull secrets. Merged with `image.pullSecrets`. Each entry may be a string or a `{name: foo}` map |
 | global.image.registry | string | `""` | Global image registry override. Takes precedence over `image.registry` |
 
 ### Image
@@ -50,7 +50,7 @@ Fetches and monitors Kubernetes manifests from a running cluster
 |-----|------|---------|-------------|
 | image.digest | string | `""` | Container image digest. When set, takes precedence over `image.tag` |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
-| image.pullSecrets | list | `[]` | Image pull secrets |
+| image.pullSecrets | list | `[]` | Image pull secrets. Each entry may be a string or a `{name: foo}` map |
 | image.registry | string | `"ghcr.io"` | Container image registry |
 | image.repository | string | `"grafana/k8s-manifest-tail"` | Container image repository (without registry prefix) |
 | image.tag | string | `""` | Container image tag. Defaults to the chart's appVersion |
