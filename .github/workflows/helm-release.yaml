@@ -4,11 +4,6 @@ name: Release Helm chart
 on:
   workflow_dispatch:
 
-env:
-  CR_INDEX_PATH: "${{ github.workspace }}/.cr-index"
-  CR_PACKAGE_PATH: "${{ github.workspace }}/.cr-release-packages"
-  CR_TOOL_PATH: "${{ github.workspace }}/.cr-tool"
-
 permissions: {}
 
 jobs:
@@ -24,104 +19,44 @@ jobs:
       ct_configfile: ct.yaml
       github_app: k8s-manifest-tail
 
-#  release:
-#    runs-on: ubuntu-latest
-#    needs: release-chart
-#
-#    permissions:
-#      contents: read
-#      id-token: write
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-#        with:
-#          fetch-depth: 0
-#          path: source
-#          persist-credentials: 'false'
-#
-#      - name: Configure Git
-#        run: |
-#          cd source
-#          git config user.name "$GITHUB_ACTOR"
-#          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-#
-#      - name: Install Helm
-#        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
-#
-#      - name: Parse Chart.yaml
-#        id: parse-chart
-#        working-directory: source/operations/helm
-#        run: |
-#          name=$(yq ".name" < Chart.yaml)
-#          version=$(yq ".version" < Chart.yaml)
-#          {
-#            echo "chartpath=operations/helm";
-#            echo "tagname=${name}-${version}";
-#            echo "packagename=${name}-${version}";
-#          } >> "${GITHUB_OUTPUT}"
-#
-#      - name: Add dependency chart repos
-#        env:
-#          CHARTPATH: ${{ steps.parse-chart.outputs.chartpath }}
-#        working-directory: source
-#        run: |
-#          # Skip the header line and make sure that tabs are expanded into spaces
-#          deps=$(helm dependency list "${CHARTPATH}" | tail +2 | expand)
-#          while read -r row; do
-#            IFS=' ' read -ra parts <<< "$row"
-#            name="${parts[0]}"
-#            repo="${parts[2]}"
-#            case "$repo" in
-#              "https://"*) helm repo add "$name" "$repo" ;;
-#              *) echo >&2 "Skipping dependency $name: unsupported schema for \"$repo\"" ;;
-#            esac
-#          done <<< "$deps"
-#
-#      - name: Get GitHub App token
-#        id: get-github-app-token
-#        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
-#        with:
-#          github_app: k8s-manifest-tail
-#
-#      - name: Set the token
-#        env:
-#          APP_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
-#        run: echo "AUTHTOKEN=${APP_TOKEN}" >> "${GITHUB_ENV}"
-#
-#      - name: Parse Chart.yaml
-#        id: parse-chart
-#        working-directory: source/charts/k8s-manifest-tail
-#        run: |
-#          name=$(yq ".name" < Chart.yaml)
-#          version=$(yq ".version" < Chart.yaml)
-#          prerelease=false
-#          if [[ "$version" == *-* ]]; then
-#            prerelease=true
-#          fi
-#          {
-#            echo "chartpath=charts/$(basename "$(pwd)")";
-#            echo "tagname=${name}-${version}";
-#            echo "packagename=${name}-${version}";
-#            echo "version=${version}";
-#            echo "prerelease=${prerelease}";
-#          } >> "${GITHUB_OUTPUT}"
-#
-#      - name: Make GitHub release
-#        env:
-#          GH_TOKEN: ${{ env.AUTHTOKEN }}
-#          TAGNAME: ${{ steps.parse-chart.outputs.tagname }}
-#          PACKAGENAME: ${{ steps.parse-chart.outputs.packagename }}
-#          NOTES_PATH: ${{ steps.release-notes.outputs.notes_path }}
-#          PRERELEASE: ${{ steps.parse-chart.outputs.prerelease }}
-#        run: |
-#          prerelease_flag=""
-#          if [[ "${PRERELEASE}" == "true" ]]; then
-#            prerelease_flag="--prerelease"
-#          fi
-#          gh release create "${TAGNAME}" \
-#            --title "${TAGNAME}" \
-#            --repo "grafana/k8s-manifest-tail" \
-#            --notes-file "${NOTES_PATH}" \
-#            ${prerelease_flag} \
-#            "${CR_PACKAGE_PATH}/${PACKAGENAME}.tgz"
+  release:
+    runs-on: ubuntu-latest
+    needs: release-chart
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: 'false'
+
+      - name: Parse Chart.yaml
+        id: parse-chart
+        working-directory: operations/helm
+        run: |
+          name=$(yq ".name" < Chart.yaml)
+          version=$(yq ".version" < Chart.yaml)
+          prerelease=false
+          if [[ "$version" == *-* ]]; then
+            prerelease=true
+          fi
+          {
+            echo "tagname=${name}-${version}";
+            echo "prerelease=${prerelease}";
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Make GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAGNAME: ${{ steps.parse-chart.outputs.tagname }}
+          PRERELEASE: ${{ steps.parse-chart.outputs.prerelease }}
+        run: |
+          prerelease_flag=""
+          if [[ "${PRERELEASE}" == "true" ]]; then
+            prerelease_flag="--prerelease"
+          fi
+          gh release create "${TAGNAME}" \
+            --title "${TAGNAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --notes "Chart released at https://github.com/grafana/helm-charts/releases/tag/${TAGNAME}" \
+            ${prerelease_flag}
