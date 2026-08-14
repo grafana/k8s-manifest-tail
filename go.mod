@@ -3,7 +3,7 @@ module github.com/grafana/k8s-manifest-tail
 go 1.26.0
 
 require (
-	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/ginkgo/v2 v2.32.1
 	github.com/onsi/gomega v1.42.1
 	github.com/spf13/cobra v1.10.2
 	go.opentelemetry.io/otel v1.44.0
