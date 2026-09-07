@@ -1,6 +1,6 @@
 module github.com/grafana/k8s-manifest-tail
 
-go 1.26.0
+go 1.27
 
 require (
 	github.com/onsi/ginkgo/v2 v2.32.1
