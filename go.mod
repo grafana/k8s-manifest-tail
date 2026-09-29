@@ -10,10 +10,10 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.20.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.20.0
-	go.opentelemetry.io/otel/log v0.20.0
+	go.opentelemetry.io/otel/log v0.21.0
 	go.opentelemetry.io/otel/metric v1.45.0
 	go.opentelemetry.io/otel/sdk v1.45.0
-	go.opentelemetry.io/otel/sdk/log v0.20.0
+	go.opentelemetry.io/otel/sdk/log v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
