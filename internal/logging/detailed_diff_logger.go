@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
 
 	"github.com/grafana/k8s-manifest-tail/internal/manifest"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -63,16 +64,16 @@ func (l *DetailedDiffLogger) Log(diff *manifest.Diff) {
 		telemetry.Info(
 			l.logger,
 			string(jsonBytes),
-			log.String("action", payload.Action),
-			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
+			attribute.String("action", payload.Action),
+			attribute.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
 		)
 	} else {
 		telemetry.Info(
 			l.logger,
 			string(jsonBytes),
-			log.String("action", payload.Action),
-			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
-			log.String("k8s.namespace.name", payload.Namespace),
+			attribute.String("action", payload.Action),
+			attribute.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(payload.Kind)), payload.Name),
+			attribute.String("k8s.namespace.name", payload.Namespace),
 		)
 	}
 }

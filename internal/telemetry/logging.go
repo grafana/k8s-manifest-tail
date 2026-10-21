@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/grafana/k8s-manifest-tail/internal"
 	"github.com/grafana/k8s-manifest-tail/internal/config"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
@@ -57,10 +58,10 @@ func SetupLogging(ctx context.Context, cfg config.LoggingConfig, consoleOutput i
 	return logger, shutdown, nil
 }
 
-func Info(logger log.Logger, msg string, attributes ...log.KeyValue) {
+func Info(logger log.Logger, msg string, attributes ...attribute.KeyValue) {
 	var record log.Record
 	record.SetSeverity(log.SeverityInfo)
-	record.SetBody(log.StringValue(msg))
+	record.SetBody(attribute.StringValue(msg))
 	record.AddAttributes(attributes...)
 	logger.Emit(context.Background(), record)
 }
