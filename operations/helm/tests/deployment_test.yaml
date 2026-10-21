@@ -17,7 +17,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: ghcr.io/grafana/k8s-manifest-tail:0.1.2
+          value: ghcr.io/grafana/k8s-manifest-tail:0.1.3
 
   - it: should use a custom image tag when set
     set:
@@ -33,7 +33,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/grafana/k8s-manifest-tail:0.1.2
+          value: docker.io/grafana/k8s-manifest-tail:0.1.3
 
   - it: should prefer global image registry over image registry
     set:
@@ -42,7 +42,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: registry.example.com/grafana/k8s-manifest-tail:0.1.2
+          value: registry.example.com/grafana/k8s-manifest-tail:0.1.3
 
   - it: should use digest when set
     set:

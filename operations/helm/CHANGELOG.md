@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+* Update k8s-manifest-tail binary to 0.1.3 (@petewall)
+
 ## 0.1.4
 
 * Improve handling for image pull secrets.
