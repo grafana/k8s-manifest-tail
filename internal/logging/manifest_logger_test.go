@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/embedded"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -85,8 +86,8 @@ func (c *capturingLogger) Enabled(context.Context, log.EnabledParameters) bool {
 
 func recordAttributes(rec log.Record) map[string]string {
 	attrs := make(map[string]string, rec.AttributesLen())
-	rec.WalkAttributes(func(kv log.KeyValue) bool {
-		attrs[kv.Key] = kv.Value.AsString()
+	rec.WalkAttributes(func(kv attribute.KeyValue) bool {
+		attrs[string(kv.Key)] = kv.Value.AsString()
 		return true
 	})
 	return attrs

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/grafana/k8s-manifest-tail/internal/manifest"
 	"github.com/grafana/k8s-manifest-tail/internal/telemetry"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/log"
 	"strings"
 )
@@ -32,16 +33,16 @@ func (l *CompactDiffLogger) Log(diff *manifest.Diff) {
 		telemetry.Info(
 			l.logger,
 			fmt.Sprintf("Object %s: %s %s", action, target.GetKind(), target.GetName()),
-			log.String("action", action),
-			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
+			attribute.String("action", action),
+			attribute.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
 		)
 	} else {
 		telemetry.Info(
 			l.logger,
 			fmt.Sprintf("Object %s: %s %s/%s", action, target.GetKind(), target.GetNamespace(), target.GetName()),
-			log.String("action", action),
-			log.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
-			log.String("k8s.namespace.name", target.GetNamespace()),
+			attribute.String("action", action),
+			attribute.String(fmt.Sprintf("k8s.%s.name", strings.ToLower(target.GetKind())), target.GetName()),
+			attribute.String("k8s.namespace.name", target.GetNamespace()),
 		)
 	}
 }
