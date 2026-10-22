@@ -24,7 +24,7 @@ image:
   repository: grafana/k8s-manifest-tail
   # -- Container image tag. Defaults to the chart's appVersion
   # @section -- Image
-  tag: ""
+  tag: "@sha256:343fac7a3c9d6fe95e239af331364486b6cf4d2829901d7793f20c6f12a04189"
   # -- Container image digest. When set, takes precedence over `image.tag`
   # @section -- Image
   digest: ""
